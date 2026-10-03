@@ -1,0 +1,22 @@
+// src/material-overrides.scss
+@use '@angular/material' as mat;
+
+:root {
+  @include mat.sidenav-overrides((
+    container-elevation-shadow: none,
+    container-divider-color: var(--mat-sys-outline-variant),
+    container-width: 220px,
+    container-shape: 0px
+  ));
+
+  @include mat.button-overrides((
+    filled-container-color: var(--mat-sys-secondary-container),
+    filled-label-text-color: var(--mat-sys-on-secondary-container),
+  ));
+
+  @include mat.list-overrides((
+    active-indicator-color: var(--mat-sys-secondary-container),
+    list-item-container-shape: 8px,
+    active-indicator-shape: 8px
+  ));
+}

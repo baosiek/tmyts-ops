@@ -1,0 +1,70 @@
+<app-page-header title="Nodes" subtitle="Cluster nodes and live resource usage." />
+<div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
+  @for (node of cards(); track node.name) {
+    <mat-card>
+      <div class="flex items-start justify-between gap-3 px-4 pt-4">
+        <div class="min-w-0">
+          <h3 class="m-0 text-lg font-medium break-words">{{ node.name }}</h3>
+          <p class="m-0 mt-0.5 font-mono text-sm text-(--mat-sys-on-surface-variant)">{{ node.internal_address }}</p>
+        </div>
+        <span
+          class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+          [class]="node.ready
+            ? 'bg-emerald-100 text-emerald-800'
+            : 'bg-(--mat-sys-error-container) text-(--mat-sys-on-error-container)'"
+        >
+          <span class="size-1.5 rounded-full bg-current"></span>
+          {{ node.status }}
+        </span>
+      </div>
+
+      <mat-card-content>
+        <div class="flex flex-col gap-5 pt-5">
+          <div class="flex flex-col gap-4">
+            @for (m of node.meters; track m.label) {
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-baseline justify-between text-sm">
+                  <span class="font-medium">{{ m.label }}</span>
+                  <span class="text-(--mat-sys-on-surface-variant)">
+                    @if (m.used !== undefined) {
+                      {{ m.used | number: m.digits }} / {{ m.total | number: m.digits }} {{ m.unit }}
+                    } @else {
+                      {{ m.total | number: m.digits }} {{ m.unit }}
+                    }
+                  </span>
+                </div>
+                @if (m.pct !== null) {
+                  <mat-progress-bar
+                    mode="determinate"
+                    [value]="m.pct"
+                    [color]="m.pct > 85 ? 'warn' : 'primary'"
+                  />
+                  <span class="text-xs text-(--mat-sys-on-surface-variant)">
+                    {{ m.pct | number: '1.0-0' }}% used
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <mat-divider />
+
+          <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
+            @for (item of [
+              { label: 'Version', value: node.version },
+              { label: 'Architecture', value: node.os_arch },
+              { label: 'Pods', value: (node.pods | number: '1.0-0') },
+              { label: 'GPU', value: (node.gpu | number: '1.0-0') },
+              { label: 'Disk', value: (node.diskGiB | number: '1.0-0') + ' GiB' },
+            ]; track item.label) {
+              <div>
+                <dt class="text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ item.label }}</dt>
+                <dd class="m-0 mt-0.5 font-medium">{{ item.value }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

@@ -1,0 +1,18 @@
+<mat-sidenav-container class="h-full">
+    <mat-sidenav mode="side" [opened]="true">
+        <div class="p-2">
+            <p class="px-4 pb-1 pt-3 text-xs font-medium uppercase tracking-wider text-(--mat-sys-on-surface-variant)">Projects</p>
+            <mat-nav-list>
+                @for (p of projectList; track p.path) {
+                <a mat-list-item [routerLink]="p.path" routerLinkActive #rla="routerLinkActive"
+                    [activated]="rla.isActive">{{p.label}}</a>
+                }
+            </mat-nav-list>
+        </div>
+    </mat-sidenav>
+    <mat-sidenav-content>
+        <div class="p-6">
+            <router-outlet />
+        </div>
+    </mat-sidenav-content>
+</mat-sidenav-container>

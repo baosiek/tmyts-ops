@@ -1,0 +1,8 @@
+apiUrl: http://localhost:8005/api/
+endpoints:
+  nodes: "nodes"
+  pods: "pods"
+  deployments: "deployments"
+  jobs: "jobs"
+  events: "events"
+  nodeUsage: "node-usage"
