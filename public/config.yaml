@@ -6,3 +6,4 @@ endpoints:
   jobs: "jobs"
   events: "events"
   nodeUsage: "node-usage"
+  deploymentMetrics: "deployment-metrics"

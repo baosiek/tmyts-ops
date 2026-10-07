@@ -20,31 +20,26 @@
 
       <mat-card-content>
         <div class="flex flex-col gap-5 pt-5">
-          <div class="flex flex-col gap-4">
-            @for (m of node.meters; track m.label) {
-              <div class="flex flex-col gap-1.5">
-                <div class="flex items-baseline justify-between text-sm">
-                  <span class="font-medium">{{ m.label }}</span>
-                  <span class="text-(--mat-sys-on-surface-variant)">
-                    @if (m.used !== undefined) {
-                      {{ m.used | number: m.digits }} / {{ m.total | number: m.digits }} {{ m.unit }}
-                    } @else {
-                      {{ m.total | number: m.digits }} {{ m.unit }}
-                    }
-                  </span>
+          <div class="grid grid-cols-2 gap-4">
+            @for (r of node.rings; track r.label) {
+              <div class="flex flex-col items-center gap-1 text-center">
+                <div
+                  class="size-24 shrink-0"
+                  role="img"
+                  [attr.aria-label]="r.label + ' ' + r.detail"
+                  [appEchart]="r.option"
+                ></div>
+                <div class="text-sm">
+                  <p class="m-0 font-medium">{{ r.label }}</p>
+                  <p class="m-0 mt-0.5 text-xs whitespace-nowrap text-(--mat-sys-on-surface-variant) tabular-nums">{{ r.detail }}</p>
                 </div>
-                @if (m.pct !== null) {
-                  <mat-progress-bar
-                    mode="determinate"
-                    [value]="m.pct"
-                    [color]="m.pct > 85 ? 'warn' : 'primary'"
-                  />
-                  <span class="text-xs text-(--mat-sys-on-surface-variant)">
-                    {{ m.pct | number: '1.0-0' }}% used
-                  </span>
-                }
               </div>
             }
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <p class="m-0 text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Live usage · last 5 min</p>
+            <div class="h-52 w-full" role="img" aria-label="CPU and memory usage over the last 5 minutes" [appEchart]="node.usageOption"></div>
           </div>
 
           <mat-divider />

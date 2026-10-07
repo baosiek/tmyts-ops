@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 import { INodeInfo } from '../interfaces/i-node-info';
 import { HttpClient } from '@angular/common/http';
 import { INodeUsage } from '../interfaces/i-node-usage';
+import { IDeploymentInfo } from '../interfaces/i-deployment-info';
+import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 
 @Service()
 export class K8sResourcesApi {
@@ -21,5 +23,15 @@ export class K8sResourcesApi {
     getNodeUsage(): Observable<INodeUsage[]> {
         let url: string = `${this.baseUrl}${this.endpoints['nodeUsage']}`;
         return this.http.get<INodeUsage[]>(url);
+    }
+
+    getDeployments(): Observable<IDeploymentInfo[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['deployments']}`;
+        return this.http.get<IDeploymentInfo[]>(url);
+    }
+
+    getDeploymentMetrics(): Observable<IDeploymentMetrics[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['deploymentMetrics']}`;
+        return this.http.get<IDeploymentMetrics[]>(url);
     }
 }
