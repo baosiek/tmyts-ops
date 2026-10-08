@@ -23,6 +23,8 @@ export interface IPodResourceRequirement {
 export interface IPodInfo {
     namespace: string;
     hostname: string;
+    /** Empty until the pod is assigned an IP. */
+    pod_ip: string;
     name: string;
     /** Null until the pod is scheduled onto a node. */
     node: string | null;
