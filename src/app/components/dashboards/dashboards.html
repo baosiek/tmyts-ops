@@ -1,7 +1,7 @@
 <mat-sidenav-container class="h-full">
     <mat-sidenav mode="side" [opened]="true">
         <div class="p-2">
-        <p class="px-4 pb-1 pt-3 text-xs font-medium uppercase tracking-wider text-(--mat-sys-on-surface-variant)">Dashboards</p>
+        <p class="px-4 pb-1 pt-3 text-xs font-medium uppercase font-bold tracking-wider text-(--mat-sys-on-surface-variant)">Dashboards</p>
         <mat-nav-list>
             @for (d of dashboardList; track d.path) {
             <a mat-list-item [routerLink]="d.path" routerLinkActive #rla="routerLinkActive"

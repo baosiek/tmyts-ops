@@ -1,57 +1,5 @@
 <app-page-header title="Deployments" subtitle="Workload deployments and their rollout status." />
-@if (namespaces().length > 1 || hasSystemNamespaces()) {
-  <section
-    class="mb-4 flex flex-col gap-3 rounded-xl border border-(--mat-sys-outline-variant) bg-(--mat-sys-surface-container-low) p-4"
-    aria-labelledby="ns-filter-title"
-  >
-    <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
-      <div>
-        <h2 id="ns-filter-title" class="m-0 text-base font-medium">Select namespaces</h2>
-        <p class="m-0 mt-0.5 text-sm text-(--mat-sys-on-surface-variant)">
-          @if (selectedNamespaces().length === 0) {
-            Showing all {{ namespaces().length }} {{ namespaces().length === 1 ? 'namespace' : 'namespaces' }}
-          } @else {
-            Showing {{ selectedNamespaces().length }} of {{ namespaces().length }} {{ namespaces().length === 1 ? 'namespace' : 'namespaces' }}
-          }
-        </p>
-      </div>
-      @if (hasSystemNamespaces()) {
-        <mat-slide-toggle [checked]="showSystem()" (change)="showSystem.set($event.checked)">
-          Show system namespaces
-        </mat-slide-toggle>
-      }
-    </div>
-
-    @if (namespaces().length > 1) {
-      @if (useDropdown()) {
-        <mat-form-field class="w-full max-w-sm" subscriptSizing="dynamic">
-          <mat-label>Namespaces</mat-label>
-          <mat-select
-            multiple
-            placeholder="All namespaces"
-            [value]="selectedNamespaces()"
-            (selectionChange)="onNamespaceChange($event.value)"
-          >
-            @for (ns of namespaces(); track ns) {
-              <mat-option [value]="ns">{{ ns }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      } @else {
-        <mat-chip-listbox
-          aria-labelledby="ns-filter-title"
-          multiple
-          [value]="selectedNamespaces()"
-          (change)="onNamespaceChange($event.value)"
-        >
-          @for (ns of namespaces(); track ns) {
-            <mat-chip-option [value]="ns">{{ ns }}</mat-chip-option>
-          }
-        </mat-chip-listbox>
-      }
-    }
-  </section>
-}
+<app-namespace-filter [state]="nsFilter" />
 <div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
   @for (deployment of cards(); track deployment.namespace + '/' + deployment.name) {
     <mat-card>
@@ -98,7 +46,7 @@
           <mat-divider />
 
           <div class="flex flex-col gap-1">
-            <p class="m-0 text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Live usage · last 5 min</p>
+            <p class="m-0 text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Live usage · last 5 min</p>
             <div class="h-52 w-full" role="img" aria-label="CPU and memory usage over the last 5 minutes" [appEchart]="deployment.usageOption"></div>
           </div>
 
@@ -106,8 +54,8 @@
             <mat-divider />
             <div class="flex flex-col gap-3">
               <div class="min-w-0">
-                <p class="m-0 text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Container</p>
-                <p class="m-0 mt-0.5 text-sm font-medium break-words">{{ c.name }}</p>
+                <p class="m-0 text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Container</p>
+                <p class="m-0 mt-0.5 text-sm break-words">{{ c.name }}</p>
                 <p class="m-0 mt-0.5 font-mono text-xs break-all text-(--mat-sys-on-surface-variant)">{{ c.image }}</p>
               </div>
               <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
@@ -116,8 +64,8 @@
                   { label: 'Limits', value: c.limits },
                 ]; track item.label) {
                   <div>
-                    <dt class="text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ item.label }}</dt>
-                    <dd class="m-0 mt-0.5 font-medium">{{ item.value }}</dd>
+                    <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ item.label }}</dt>
+                    <dd class="m-0 mt-0.5">{{ item.value }}</dd>
                   </div>
                 }
               </dl>
@@ -130,13 +78,13 @@
               @for (cond of deployment.conditions; track cond.condition_type) {
                 <div [title]="cond.condition_message">
                   <dt class="flex items-center justify-between gap-2">
-                    <span class="text-xs tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ cond.condition_type }}</span>
+                    <span class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ cond.condition_type }}</span>
                     <span
-                      class="text-xs font-medium"
+                      class="text-xs"
                       [class]="cond.condition_status === 'True' ? 'text-emerald-700' : 'text-(--mat-sys-error)'"
                     >{{ cond.condition_status }}</span>
                   </dt>
-                  <dd class="m-0 mt-0.5 font-medium">{{ cond.condition_reason || '—' }}</dd>
+                  <dd class="m-0 mt-0.5">{{ cond.condition_reason || '—' }}</dd>
                 </div>
               }
             </dl>

@@ -1,12 +1,10 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { IDeploymentInfo } from '../../../interfaces/i-deployment-info';
 import { K8sResourcesApi } from '../../../services/k8s-resources-api';
+import { NamespaceFilter } from '../../../shared/namespace-filter/namespace-filter';
+import { NamespaceFilterState } from '../../../shared/namespace-filter/namespace-filter-state';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { catchError, EMPTY, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,11 +12,6 @@ import { IDeploymentMetrics } from '../../../interfaces/i-deployment-metrics';
 import { Echart } from '../../../shared/echart/echart';
 import { replicaRingOption, USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/echart/charts';
 import { formatQuantity } from '../../../shared/format-quantity';
-
-/** Above this many namespaces the filter switches from chips to a dropdown. */
-const MAX_NAMESPACE_CHIPS = 8;
-
-const isSystemNamespace = (ns: string) => ns.startsWith('kube-');
 
 /**
  * Heading for one usage panel: the latest value, plus the ceiling when every
@@ -49,12 +42,9 @@ function formatResources(r: Record<string, number> | null): string {
   imports: [
     PageHeader,
     MatCardModule,
-    MatChipsModule,
     MatDividerModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    MatSlideToggleModule,
     Echart,
+    NamespaceFilter,
   ],
   selector: 'app-deployments-dashboard',
   styleUrl: './deployments-dashboard.scss',
@@ -69,41 +59,11 @@ export class DeploymentsDashboard implements OnInit {
   private readonly history = signal<Record<string, UsageSample[]>>({});
   private readonly lastSampleAt = signal(Date.now());
 
-  /** Whether deployments in kube-* namespaces are shown. */
-  protected readonly showSystem = signal(false);
+  protected readonly nsFilter = new NamespaceFilterState(() => this.deployments().map((d) => d.namespace));
 
-  protected readonly hasSystemNamespaces = computed(() =>
-    this.deployments().some((d) => isSystemNamespace(d.namespace)),
+  private readonly visibleDeployments = computed(() =>
+    this.deployments().filter((d) => this.nsFilter.includes(d.namespace)),
   );
-
-  /** Deployments left after applying the system-namespace toggle. */
-  private readonly scopedDeployments = computed(() =>
-    this.showSystem()
-      ? this.deployments()
-      : this.deployments().filter((d) => !isSystemNamespace(d.namespace)),
-  );
-
-  /** Distinct namespaces available to filter on, sorted for display. */
-  protected readonly namespaces = computed(() =>
-    [...new Set(this.scopedDeployments().map((d) => d.namespace))].sort(),
-  );
-
-  protected readonly useDropdown = computed(() => this.namespaces().length > MAX_NAMESPACE_CHIPS);
-
-  /** Namespaces the user picked, possibly including ones no longer present. */
-  private readonly pickedNamespaces = signal<string[]>([]);
-
-  /** The picked namespaces that still exist; empty means show all. */
-  protected readonly selectedNamespaces = computed(() =>
-    this.pickedNamespaces().filter((ns) => this.namespaces().includes(ns)),
-  );
-
-  private readonly visibleDeployments = computed(() => {
-    const selected = this.selectedNamespaces();
-    return selected.length === 0
-      ? this.scopedDeployments()
-      : this.scopedDeployments().filter((d) => selected.includes(d.namespace));
-  });
 
   /** Each deployment with its chart options and display-ready container resources. */
   protected readonly cards = computed(() => {
@@ -136,10 +96,6 @@ export class DeploymentsDashboard implements OnInit {
       };
     });
   });
-
-  protected onNamespaceChange(value: string[] | null): void {
-    this.pickedNamespaces.set(value ?? []);
-  }
 
   ngOnInit(): void {
     this.api.getDeployments().subscribe((deployments) => this.deployments.set(deployments));
