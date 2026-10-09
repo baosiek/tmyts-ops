@@ -34,8 +34,9 @@ function ringOption(pct: number, label: string, color: string): EChartOption {
         max: 100,
         radius: '92%',
         pointer: { show: false },
-        // Hidden at 0%: a zero-length arc would still draw its rounded cap as a dot.
-        progress: { show: pct > 0, roundCap: true, width: 8, itemStyle: { color } },
+        // Transparent at 0%, where a zero-length arc would still draw its rounded cap
+        // as a dot. Not `show: false`: ECharts throws when an update later turns it on.
+        progress: { show: true, roundCap: true, width: 8, itemStyle: { color, opacity: pct > 0 ? 1 : 0 } },
         axisLine: { lineStyle: { width: 8, color: [[1, RING_TRACK]] } },
         axisTick: { show: false },
         splitLine: { show: false },

@@ -7,13 +7,11 @@
           <h3 class="m-0 text-lg font-medium break-words">{{ node.name }}</h3>
           <p class="m-0 mt-0.5 font-mono text-sm text-(--mat-sys-on-surface-variant)">{{ node.internal_address }}</p>
         </div>
+        <!-- Same ring colors as the deployment replica ring: green ready, red otherwise. -->
         <span
-          class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-          [class]="node.ready
-            ? 'bg-emerald-100 text-emerald-800'
-            : 'bg-(--mat-sys-error-container) text-(--mat-sys-on-error-container)'"
+          class="flex size-14 shrink-0 items-center justify-center rounded-full border-[5px] text-xs font-medium"
+          [class]="node.ready ? 'border-[#0ca30c]' : 'border-[#d03b3b]'"
         >
-          <span class="size-1.5 rounded-full bg-current"></span>
           {{ node.status }}
         </span>
       </div>
