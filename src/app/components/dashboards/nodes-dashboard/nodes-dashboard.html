@@ -1,4 +1,4 @@
-<app-page-header title="Nodes" subtitle="Cluster nodes and live resource usage." />
+<app-page-header title="Nodes" [loading]="loading()" subtitle="Cluster nodes and live resource usage." />
 <div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
   @for (node of cards(); track node.name) {
     <mat-card>

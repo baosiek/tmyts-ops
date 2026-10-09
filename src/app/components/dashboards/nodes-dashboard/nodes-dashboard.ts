@@ -3,9 +3,10 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { catchError, EMPTY, switchMap, timer } from 'rxjs';
+import { catchError, EMPTY, switchMap, timer, finalize } from 'rxjs';
 import { INodeInfo } from '../../../interfaces/i-node-info';
 import { INodeUsage } from '../../../interfaces/i-node-usage';
+import { APP_CONFIG, refreshIntervalMs } from '../../../interfaces/i-app-config';
 import { K8sResourcesApi } from '../../../services/k8s-resources-api';
 import { usageChartOption, usageRingOption, USAGE_WINDOW_MS, UsageSample } from '../../../shared/echart/charts';
 import { Echart } from '../../../shared/echart/echart';
@@ -23,6 +24,10 @@ const GIB = 2 ** 30;
 export class NodesDashboard implements OnInit {
   private readonly api = inject(K8sResourcesApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly refreshMs = refreshIntervalMs(inject(APP_CONFIG));
+
+  /** True until the nodes list has arrived (or failed). */
+  protected readonly loading = signal(true);
 
   private readonly nodes = signal<INodeInfo[]>([]);
 
@@ -64,9 +69,12 @@ export class NodesDashboard implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.getNodes().subscribe((nodes) => this.nodes.set(nodes));
+    this.api
+      .getNodes()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe((nodes) => this.nodes.set(nodes));
 
-    timer(0, 10_000)
+    timer(0, this.refreshMs)
       .pipe(
         switchMap(() => this.api.getNodeUsage().pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(this.destroyRef),

@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { INodeUsage } from '../interfaces/i-node-usage';
 import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
+import { IPodMetrics } from '../interfaces/i-pod-metrics';
 import { IPodInfo } from '../interfaces/i-pod-info';
 
 @Service()
@@ -39,5 +40,10 @@ export class K8sResourcesApi {
     getPodsInfo(): Observable<IPodInfo[]> {
         let url: string = `${this.baseUrl}${this.endpoints['pods']}`;
         return this.http.get<IPodInfo[]>(url);
+    }
+
+    getPodMetrics(): Observable<IPodMetrics[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['podMetrics']}`;
+        return this.http.get<IPodMetrics[]>(url);
     }
 }

@@ -7,8 +7,9 @@ const MAX_NAMESPACE_CHIPS = 8;
 
 /**
  * Namespace filter state shared by a dashboard and its <app-namespace-filter>.
- * The dashboard creates one, passing the namespaces of everything it lists, and
- * filters its items with `includes()`.
+ * The dashboard creates one, passing the namespaces of everything it lists (and
+ * optionally the namespaces to start with selected), and filters its items with
+ * `includes()`. Initial namespaces that don't exist are ignored, as with any pick.
  */
 export class NamespaceFilterState {
   /** Whether items in kube-* namespaces are shown. */
@@ -17,7 +18,12 @@ export class NamespaceFilterState {
   /** Namespaces the user picked, possibly including ones no longer present. */
   private readonly picked = signal<string[]>([]);
 
-  constructor(private readonly allNamespaces: () => string[]) {}
+  constructor(
+    private readonly allNamespaces: () => string[],
+    initial: string[] = [],
+  ) {
+    this.picked.set(initial);
+  }
 
   readonly hasSystemNamespaces = computed(() => this.allNamespaces().some(isSystemNamespace));
 

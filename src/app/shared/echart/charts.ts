@@ -34,7 +34,8 @@ function ringOption(pct: number, label: string, color: string): EChartOption {
         max: 100,
         radius: '92%',
         pointer: { show: false },
-        progress: { show: true, roundCap: true, width: 8, itemStyle: { color } },
+        // Hidden at 0%: a zero-length arc would still draw its rounded cap as a dot.
+        progress: { show: pct > 0, roundCap: true, width: 8, itemStyle: { color } },
         axisLine: { lineStyle: { width: 8, color: [[1, RING_TRACK]] } },
         axisTick: { show: false },
         splitLine: { show: false },

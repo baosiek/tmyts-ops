@@ -2,11 +2,12 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { IDeploymentInfo } from '../../../interfaces/i-deployment-info';
+import { APP_CONFIG, defaultNamespaces, refreshIntervalMs } from '../../../interfaces/i-app-config';
 import { K8sResourcesApi } from '../../../services/k8s-resources-api';
 import { NamespaceFilter } from '../../../shared/namespace-filter/namespace-filter';
 import { NamespaceFilterState } from '../../../shared/namespace-filter/namespace-filter-state';
 import { PageHeader } from '../../../shared/page-header/page-header';
-import { catchError, EMPTY, switchMap, timer } from 'rxjs';
+import { catchError, EMPTY, switchMap, timer, finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IDeploymentMetrics } from '../../../interfaces/i-deployment-metrics';
 import { Echart } from '../../../shared/echart/echart';
@@ -53,13 +54,21 @@ function formatResources(r: Record<string, number> | null): string {
 export class DeploymentsDashboard implements OnInit {
   private readonly api = inject(K8sResourcesApi);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly config = inject(APP_CONFIG);
+  private readonly refreshMs = refreshIntervalMs(this.config);
+
+  /** True until the deployments list has arrived (or failed). */
+  protected readonly loading = signal(true);
 
   private readonly deployments = signal<IDeploymentInfo[]>([]);
   /** Recent usage samples per deployment, oldest first, covering USAGE_WINDOW_MS. */
   private readonly history = signal<Record<string, UsageSample[]>>({});
   private readonly lastSampleAt = signal(Date.now());
 
-  protected readonly nsFilter = new NamespaceFilterState(() => this.deployments().map((d) => d.namespace));
+  protected readonly nsFilter = new NamespaceFilterState(
+    () => this.deployments().map((d) => d.namespace),
+    defaultNamespaces(this.config),
+  );
 
   private readonly visibleDeployments = computed(() =>
     this.deployments().filter((d) => this.nsFilter.includes(d.namespace)),
@@ -98,9 +107,12 @@ export class DeploymentsDashboard implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api.getDeployments().subscribe((deployments) => this.deployments.set(deployments));
+    this.api
+      .getDeployments()
+      .pipe(finalize(() => this.loading.set(false)))
+      .subscribe((deployments) => this.deployments.set(deployments));
 
-    timer(0, 10_000)
+    timer(0, this.refreshMs)
       .pipe(
         switchMap(() => this.api.getDeploymentMetrics().pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(this.destroyRef),

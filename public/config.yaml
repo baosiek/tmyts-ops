@@ -1,4 +1,9 @@
 apiUrl: http://localhost:8005/api/
+# How often the dashboards poll live data (usage, pod status), in seconds.
+refreshIntervalSeconds: 5
+# Namespaces pre-selected in the pods and deployments filters (empty list = all).
+defaultNamespaces:
+  - tmyts
 endpoints:
   nodes: "nodes"
   pods: "pods"
@@ -7,3 +12,4 @@ endpoints:
   events: "events"
   nodeUsage: "node-usage"
   deploymentMetrics: "deployment-metrics"
+  podMetrics: "pod-metrics"

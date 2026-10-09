@@ -1,4 +1,4 @@
-<app-page-header title="Deployments" subtitle="Workload deployments and their rollout status." />
+<app-page-header title="Deployments" [loading]="loading()" subtitle="Workload deployments and their rollout status." />
 <app-namespace-filter [state]="nsFilter" />
 <div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
   @for (deployment of cards(); track deployment.namespace + '/' + deployment.name) {
