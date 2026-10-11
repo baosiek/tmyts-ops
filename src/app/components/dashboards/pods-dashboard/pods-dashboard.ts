@@ -13,9 +13,7 @@ import { USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/
 import { Echart } from '../../../shared/echart/echart';
 import { formatQuantity } from '../../../shared/format-quantity';
 import { PageHeader } from '../../../shared/page-header/page-header';
-
-/** How a status reads at a glance; drives the dot and chip colors. */
-export type StatusTone = 'good' | 'warning' | 'critical' | 'neutral';
+import { ringClass, StatusTone } from '../../../shared/status-ring';
 
 /** A container's live status, ready for display. */
 export interface ContainerStatusView {
@@ -203,19 +201,7 @@ export class PodsDashboard implements OnInit {
   /** Visible pods that aren't ready or have failed, for the alert above the cards. */
   protected readonly attentionPods = computed(() => this.cards().filter((c) => c.needsAttention));
 
-  /** Border color of the pod status ring; the same greens and reds as the replica rings. */
-  protected ringClass(tone: StatusTone): string {
-    switch (tone) {
-      case 'good':
-        return 'border-[#0ca30c]';
-      case 'warning':
-        return 'border-[#fab219]';
-      case 'critical':
-        return 'border-[#d03b3b]';
-      default:
-        return 'border-(--mat-sys-outline-variant)';
-    }
-  }
+  protected readonly ringClass = ringClass;
 
   /** Tailwind classes for a status chip of the given tone. */
   protected chipClass(tone: StatusTone): string {

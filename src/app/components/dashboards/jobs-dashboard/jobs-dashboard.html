@@ -1,4 +1,48 @@
-<app-page-header title="Jobs" subtitle="Batch jobs and scheduled runs." />
-<div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
-  Nothing to show yet.
+<app-page-header title="Jobs" [loading]="loading()" subtitle="Scheduled CronJobs and their latest runs." />
+<app-namespace-filter [state]="nsFilter" />
+<div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
+  @for (job of cards(); track job.namespace + '/' + job.name) {
+    <mat-card>
+      <div class="flex items-start justify-between gap-3 px-4 pt-4">
+        <div class="min-w-0">
+          <h3 class="m-0 text-lg font-medium break-all">{{ job.name }}</h3>
+          <p class="m-0 mt-0.5 font-mono text-sm text-(--mat-sys-on-surface-variant)">{{ job.namespace }}</p>
+        </div>
+        <span
+          class="flex size-18 shrink-0 items-center justify-center rounded-full border-[5px] px-1 text-center text-xs leading-tight font-medium"
+          [class]="ringClass(job.tone)"
+        >
+          {{ job.run?.status ?? 'No data' }}
+        </span>
+      </div>
+
+      <mat-card-content>
+        <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 pt-5 text-sm">
+          <div class="col-span-2 min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Schedule</dt>
+            @if (job.schedule) {
+              <dd class="m-0 mt-0.5">{{ job.schedule }}</dd>
+              <dd class="m-0 font-mono text-xs text-(--mat-sys-on-surface-variant)">{{ job.scheduled }}</dd>
+            } @else {
+              <dd class="m-0 mt-0.5 font-mono">{{ job.scheduled }}</dd>
+            }
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Last run</dt>
+            <dd class="m-0 mt-0.5">{{ job.run?.started ?? '—' }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Duration</dt>
+            <dd class="m-0 mt-0.5 tabular-nums">{{ job.run?.duration ?? '—' }}</dd>
+          </div>
+        </dl>
+      </mat-card-content>
+    </mat-card>
+  } @empty {
+    @if (!loading()) {
+      <div class="col-span-full rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
+        No CronJobs in the selected namespaces.
+      </div>
+    }
+  }
 </div>
