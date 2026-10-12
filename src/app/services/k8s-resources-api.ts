@@ -8,6 +8,7 @@ import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 import { IPodMetrics } from '../interfaces/i-pod-metrics';
 import { IJobInfo } from '../interfaces/i-job-info';
+import { IJobMetrics } from '../interfaces/i-job-metrics';
 import { IPodInfo } from '../interfaces/i-pod-info';
 
 @Service()
@@ -51,5 +52,10 @@ export class K8sResourcesApi {
     getJobsInfo(): Observable<IJobInfo[]> {
         let url: string = `${this.baseUrl}${this.endpoints['jobs']}`;
         return this.http.get<IJobInfo[]>(url);
+    }
+
+    getJobMetrics(): Observable<IJobMetrics[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['jobMetrics']}`;
+        return this.http.get<IJobMetrics[]>(url);
     }
 }

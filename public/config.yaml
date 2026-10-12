@@ -13,3 +13,4 @@ endpoints:
   nodeUsage: "node-usage"
   deploymentMetrics: "deployment-metrics"
   podMetrics: "pod-metrics"
+  jobMetrics: "job-metrics"

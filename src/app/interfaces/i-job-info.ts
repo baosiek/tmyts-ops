@@ -3,8 +3,6 @@ export interface IJobInfo {
     name: string;
     /** The CronJob that owns this job; null for jobs not created by a CronJob (e.g. by Helm). */
     cron_job: string | null;
-    /** Kubernetes UID, which ties the job to its metrics; null if the server couldn't read it. */
-    uid: string | null;
     /** The owning CronJob's schedule, e.g. "5 0 * * *"; "NO SCHEDULE" for jobs without one. */
     scheduled: string;
 }

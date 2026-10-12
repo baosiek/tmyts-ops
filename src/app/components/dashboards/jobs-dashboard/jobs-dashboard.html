@@ -36,10 +36,21 @@
           <div class="min-w-0">
             <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
             <dd class="m-0 mt-0.5">{{ job.run?.started ?? '—' }}</dd>
+            @if (job.run?.startedAgo) {
+              <dd class="m-0 text-xs text-(--mat-sys-on-surface-variant)">{{ job.run!.startedAgo }}</dd>
+            }
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Finished</dt>
+            <dd class="m-0 mt-0.5">{{ job.run?.finished ?? '—' }}</dd>
           </div>
           <div class="min-w-0">
             <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Duration</dt>
             <dd class="m-0 mt-0.5 tabular-nums">{{ job.run?.duration ?? '—' }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Pods</dt>
+            <dd class="m-0 mt-0.5 tabular-nums">{{ job.run?.pods?.length ? job.run!.pods.join(' · ') : '—' }}</dd>
           </div>
         </dl>
       </mat-card-content>
