@@ -1,5 +1,7 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
 import { IDeploymentInfo } from '../../../interfaces/i-deployment-info';
 import { APP_CONFIG, defaultNamespaces, refreshIntervalMs } from '../../../interfaces/i-app-config';
@@ -46,6 +48,8 @@ function formatResources(r: Record<string, number> | null): string {
     MatDividerModule,
     Echart,
     NamespaceFilter,
+    MatButtonModule,
+    RouterLink,
   ],
   selector: 'app-deployments-dashboard',
   styleUrl: './deployments-dashboard.scss',

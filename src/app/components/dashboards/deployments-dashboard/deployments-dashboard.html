@@ -91,6 +91,9 @@
           }
         </div>
       </mat-card-content>
+      <mat-card-actions class="px-2 pb-2">
+        <a mat-button [routerLink]="['/dashboards/deployments', deployment.namespace, deployment.name, 'logs']">View logs</a>
+      </mat-card-actions>
     </mat-card>
   }
 </div>

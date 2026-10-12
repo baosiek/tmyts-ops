@@ -1,0 +1,15 @@
+<a mat-button routerLink="/dashboards/jobs" class="-ml-3 mb-2">← Back to jobs</a>
+<app-page-header title="Job logs" [loading]="loading()" [subtitle]="namespace() + ' / ' + job()" />
+
+@if (failed() && !loaded()) {
+  <div role="alert" class="rounded-xl bg-(--mat-sys-error-container) px-4 py-3 text-sm text-(--mat-sys-on-error-container)">
+    Couldn't load the logs from the server.
+  </div>
+} @else if (loaded()) {
+  <app-log-viewer
+    [lines]="lines()"
+    [status]="status()"
+    [emptyMessage]="emptyMessage()"
+    [filename]="namespace() + '-' + job()"
+  />
+}

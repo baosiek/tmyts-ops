@@ -1,6 +1,8 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 import { catchError, EMPTY, finalize, switchMap, timer } from 'rxjs';
 import { APP_CONFIG, defaultNamespaces, refreshIntervalMs } from '../../../interfaces/i-app-config';
 import { IJobInfo } from '../../../interfaces/i-job-info';
@@ -71,7 +73,7 @@ function runOf(m: IJobMetrics, now: number): JobRunView {
 }
 
 @Component({
-  imports: [PageHeader, MatCardModule, NamespaceFilter],
+  imports: [PageHeader, MatButtonModule, MatCardModule, NamespaceFilter, RouterLink],
   selector: 'app-jobs-dashboard',
   styleUrl: './jobs-dashboard.scss',
   templateUrl: './jobs-dashboard.html',

@@ -54,6 +54,9 @@
           </div>
         </dl>
       </mat-card-content>
+      <mat-card-actions class="px-2 pb-2">
+        <a mat-button [routerLink]="['/dashboards/jobs', job.namespace, job.name, 'logs']">View logs</a>
+      </mat-card-actions>
     </mat-card>
   } @empty {
     @if (!loading()) {

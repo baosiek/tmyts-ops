@@ -32,9 +32,19 @@ export const routes: Routes = [
                         import('./components/dashboards/deployments-dashboard/deployments-dashboard').then((m) => m.DeploymentsDashboard),
                 },
                 {
+                    path: 'deployments/:namespace/:name/logs',
+                    loadComponent: () =>
+                        import('./components/dashboards/deployment-logs/deployment-logs').then((m) => m.DeploymentLogs),
+                },
+                {
                     path: 'jobs',
                     loadComponent: () =>
                         import('./components/dashboards/jobs-dashboard/jobs-dashboard').then((m) => m.JobsDashboard),
+                },
+                {
+                    path: 'jobs/:namespace/:job/logs',
+                    loadComponent: () =>
+                        import('./components/dashboards/job-logs/job-logs').then((m) => m.JobLogs),
                 },
                 {
                     path: 'events',
