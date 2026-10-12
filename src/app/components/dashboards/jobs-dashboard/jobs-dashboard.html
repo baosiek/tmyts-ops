@@ -1,7 +1,7 @@
-<app-page-header title="Jobs" [loading]="loading()" subtitle="Scheduled CronJobs and their latest runs." />
+<app-page-header title="Jobs" [loading]="loading()" subtitle="Batch jobs and scheduled runs." />
 <app-namespace-filter [state]="nsFilter" />
 <div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
-  @for (job of cards(); track job.namespace + '/' + job.name) {
+  @for (job of cards(); track job.key) {
     <mat-card>
       <div class="flex items-start justify-between gap-3 px-4 pt-4">
         <div class="min-w-0">
@@ -19,8 +19,14 @@
       <mat-card-content>
         <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 pt-5 text-sm">
           <div class="col-span-2 min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">CronJob</dt>
+            <dd class="m-0 mt-0.5 break-all">{{ job.cron_job ?? 'None' }}</dd>
+          </div>
+          <div class="col-span-2 min-w-0">
             <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Schedule</dt>
-            @if (job.schedule) {
+            @if (!job.hasSchedule) {
+              <dd class="m-0 mt-0.5">Not scheduled</dd>
+            } @else if (job.schedule) {
               <dd class="m-0 mt-0.5">{{ job.schedule }}</dd>
               <dd class="m-0 font-mono text-xs text-(--mat-sys-on-surface-variant)">{{ job.scheduled }}</dd>
             } @else {
@@ -28,7 +34,7 @@
             }
           </div>
           <div class="min-w-0">
-            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Last run</dt>
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
             <dd class="m-0 mt-0.5">{{ job.run?.started ?? '—' }}</dd>
           </div>
           <div class="min-w-0">
@@ -41,7 +47,7 @@
   } @empty {
     @if (!loading()) {
       <div class="col-span-full rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
-        No CronJobs in the selected namespaces.
+        No jobs in the selected namespaces.
       </div>
     }
   }

@@ -7,7 +7,7 @@ import { INodeUsage } from '../interfaces/i-node-usage';
 import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 import { IPodMetrics } from '../interfaces/i-pod-metrics';
-import { ICronJobInfo } from '../interfaces/i-cron-job-info';
+import { IJobInfo } from '../interfaces/i-job-info';
 import { IPodInfo } from '../interfaces/i-pod-info';
 
 @Service()
@@ -48,8 +48,8 @@ export class K8sResourcesApi {
         return this.http.get<IPodMetrics[]>(url);
     }
 
-    getJobsInfo(): Observable<ICronJobInfo[]> {
+    getJobsInfo(): Observable<IJobInfo[]> {
         let url: string = `${this.baseUrl}${this.endpoints['jobs']}`;
-        return this.http.get<ICronJobInfo[]>(url);
+        return this.http.get<IJobInfo[]>(url);
     }
 }
