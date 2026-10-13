@@ -12,6 +12,7 @@ import { IJobLog } from '../interfaces/i-job-log';
 import { IJobMetrics } from '../interfaces/i-job-metrics';
 import { IPodInfo } from '../interfaces/i-pod-info';
 import { IStatefulSetInfo } from '../interfaces/i-statefulset-info';
+import { IStatefulSetMetrics } from '../interfaces/i-statefulset-metrics';
 
 @Service()
 export class K8sResourcesApi {
@@ -59,6 +60,11 @@ export class K8sResourcesApi {
     getStatefulSetsInfo(): Observable<IStatefulSetInfo[]> {
         let url: string = `${this.baseUrl}${this.endpoints['statefulset']}`;
         return this.http.get<IStatefulSetInfo[]>(url);
+    }
+
+    getStatefulSetMetrics(): Observable<IStatefulSetMetrics[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['statefulsetMetrics']}`;
+        return this.http.get<IStatefulSetMetrics[]>(url);
     }
 
     getJobMetrics(): Observable<IJobMetrics[]> {

@@ -10,21 +10,42 @@
         </div>
         <span
           class="flex size-18 shrink-0 flex-col items-center justify-center rounded-full border-[5px] px-1 text-center leading-tight"
-          [class]="ringClass('neutral')"
+          [class]="ringClass(set.tone)"
           role="img"
-          [attr.aria-label]="set.replicas + (set.replicas === 1 ? ' replica' : ' replicas')"
+          [attr.aria-label]="set.ringValue + ' ' + set.ringCaption"
         >
-          <span class="text-base font-medium tabular-nums">{{ set.replicas }}</span>
-          <span class="text-xs">{{ set.replicas === 1 ? 'replica' : 'replicas' }}</span>
+          <span class="text-base font-medium tabular-nums">{{ set.ringValue }}</span>
+          <span class="text-xs">{{ set.ringCaption }}</span>
         </span>
       </div>
 
       <mat-card-content>
         <div class="flex flex-col gap-5 pt-5">
-          <dl class="m-0 text-sm">
-            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Service</dt>
-            <dd class="m-0 mt-0.5 font-mono break-all">{{ set.service_name ?? 'None' }}</dd>
+          <dl class="m-0 grid grid-cols-3 gap-x-4 gap-y-4 text-sm">
+            @for (c of set.counts; track c.label) {
+              <div>
+                <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ c.label }}</dt>
+                <dd class="m-0 mt-0.5 tabular-nums" [class.text-(--mat-sys-error)]="c.behind">{{ c.count }} / {{ set.replicas }}</dd>
+              </div>
+            }
+            <div class="col-span-3 min-w-0">
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Service</dt>
+              <dd class="m-0 mt-0.5 font-mono break-all">{{ set.service_name ?? 'None' }}</dd>
+            </div>
+            @if (set.revision) {
+              <div class="col-span-3 min-w-0">
+                <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Revision</dt>
+                <dd class="m-0 mt-0.5 font-mono break-all">{{ set.revision }}</dd>
+              </div>
+            }
           </dl>
+
+          <mat-divider />
+
+          <div class="flex flex-col gap-1">
+            <p class="m-0 text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Live usage · last 5 min</p>
+            <div class="h-52 w-full" role="img" aria-label="CPU and memory usage over the last 5 minutes" [appEchart]="set.usageOption"></div>
+          </div>
 
           @for (c of set.containerRows; track c.name) {
             <mat-divider />
@@ -35,6 +56,14 @@
                 <p class="m-0 mt-0.5 font-mono text-xs break-all text-(--mat-sys-on-surface-variant)">{{ c.image }}</p>
               </div>
               <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
+                <div class="col-span-2">
+                  <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Usage</dt>
+                  @for (line of c.usage; track line) {
+                    <dd class="m-0 mt-0.5 tabular-nums">{{ line }}</dd>
+                  } @empty {
+                    <dd class="m-0 mt-0.5">—</dd>
+                  }
+                </div>
                 @for (item of [
                   { label: 'Requests', lines: c.requests },
                   { label: 'Limits', lines: c.limits },
@@ -50,6 +79,21 @@
                 }
               </dl>
             </div>
+          }
+
+          @if (set.conditions.length) {
+            <mat-divider />
+            <dl class="m-0 flex flex-col gap-3 text-sm">
+              @for (cond of set.conditions; track cond.type_) {
+                <div [title]="cond.message ?? ''">
+                  <dt class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ cond.type_ }}</span>
+                    <span class="text-xs font-medium" [class]="cond.status === 'True' ? 'text-emerald-700' : 'text-(--mat-sys-error)'">{{ cond.status }}</span>
+                  </dt>
+                  <dd class="m-0 mt-0.5">{{ cond.reason || '—' }}</dd>
+                </div>
+              }
+            </dl>
           }
         </div>
       </mat-card-content>

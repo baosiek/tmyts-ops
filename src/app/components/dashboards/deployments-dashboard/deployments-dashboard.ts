@@ -15,21 +15,7 @@ import { IDeploymentMetrics } from '../../../interfaces/i-deployment-metrics';
 import { Echart } from '../../../shared/echart/echart';
 import { replicaRingOption, USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/echart/charts';
 import { formatQuantity, resourceLines } from '../../../shared/format-quantity';
-
-/**
- * Heading for one usage panel: the latest value, plus the ceiling when every
- * container sets a limit (per-pod limits times the desired replica count, since
- * usage is summed across all pods).
- */
-function usageHeading(label: string, key: 'cpu' | 'memory', d: IDeploymentInfo, latest: UsageSample | undefined) {
-  if (!latest) return `${label}  —`;
-  const limits = d.containers.map((c) => c.limits?.[key]);
-  const hasLimit = d.replicas > 0 && limits.length > 0 && limits.every((l) => l !== undefined);
-  const used = formatQuantity(key, latest[key]);
-  if (!hasLimit) return `${label}  ${used}`;
-  const total = limits.reduce((sum: number, l) => sum + l!, 0) * d.replicas;
-  return `${label}  ${used} of ${formatQuantity(key, total)}`;
-}
+import { usageHeading } from '../../../shared/usage-heading';
 
 /** Key that ties metrics to a deployment; the server doesn't send namespaces yet. */
 const metricsKey = (name: string, namespace?: string) => (namespace ? `${namespace}/${name}` : name);
