@@ -16,3 +16,10 @@ export function formatQuantity(key: string, value: number): string {
   }
   return `${value}`;
 }
+
+export const RESOURCE_LABELS: Record<string, string> = { cpu: 'CPU', memory: 'Memory', 'ephemeral-storage': 'Storage' };
+
+/** One display line per resource, e.g. ["CPU 10m", "Memory 128 MiB"]; empty when none are set. */
+export function resourceLines(resources: Record<string, number> | null | undefined): string[] {
+  return Object.entries(resources ?? {}).map(([key, value]) => `${RESOURCE_LABELS[key] ?? key} ${formatQuantity(key, value)}`);
+}

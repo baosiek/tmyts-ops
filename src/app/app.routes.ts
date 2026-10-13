@@ -32,6 +32,11 @@ export const routes: Routes = [
                         import('./components/dashboards/deployments-dashboard/deployments-dashboard').then((m) => m.DeploymentsDashboard),
                 },
                 {
+                    path: 'statefulsets',
+                    loadComponent: () =>
+                        import('./components/dashboards/statefulsets-dashboard/statefulsets-dashboard').then((m) => m.StatefulSetsDashboard),
+                },
+                {
                     path: 'deployments/:namespace/:name/logs',
                     loadComponent: () =>
                         import('./components/dashboards/deployment-logs/deployment-logs').then((m) => m.DeploymentLogs),

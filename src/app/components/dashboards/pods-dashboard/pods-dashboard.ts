@@ -11,7 +11,7 @@ import { NamespaceFilter } from '../../../shared/namespace-filter/namespace-filt
 import { NamespaceFilterState } from '../../../shared/namespace-filter/namespace-filter-state';
 import { USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/echart/charts';
 import { Echart } from '../../../shared/echart/echart';
-import { formatQuantity } from '../../../shared/format-quantity';
+import { formatQuantity, RESOURCE_LABELS, resourceLines } from '../../../shared/format-quantity';
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { ringClass, StatusTone } from '../../../shared/status-ring';
 
@@ -70,13 +70,6 @@ function podPhaseStatus(m: IPodMetrics | undefined): ContainerStatusView {
  */
 function containerStatus(_pod: IPodInfo, _container: IPodContainer): ContainerStatusView | null {
   return null;
-}
-
-const RESOURCE_LABELS: Record<string, string> = { cpu: 'CPU', memory: 'Memory', 'ephemeral-storage': 'Storage' };
-
-/** One display line per resource, e.g. ["CPU 10m", "Memory 128 MiB"]. */
-function resourceLines(r: Record<string, number> | undefined): string[] {
-  return Object.entries(r ?? {}).map(([k, v]) => `${RESOURCE_LABELS[k] ?? k} ${formatQuantity(k, v)}`);
 }
 
 const podKey = (namespace: string, name: string) => `${namespace}/${name}`;

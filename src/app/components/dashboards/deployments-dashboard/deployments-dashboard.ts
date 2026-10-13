@@ -14,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IDeploymentMetrics } from '../../../interfaces/i-deployment-metrics';
 import { Echart } from '../../../shared/echart/echart';
 import { replicaRingOption, USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/echart/charts';
-import { formatQuantity } from '../../../shared/format-quantity';
+import { formatQuantity, resourceLines } from '../../../shared/format-quantity';
 
 /**
  * Heading for one usage panel: the latest value, plus the ceiling when every
@@ -33,13 +33,6 @@ function usageHeading(label: string, key: 'cpu' | 'memory', d: IDeploymentInfo, 
 
 /** Key that ties metrics to a deployment; the server doesn't send namespaces yet. */
 const metricsKey = (name: string, namespace?: string) => (namespace ? `${namespace}/${name}` : name);
-
-function formatResources(r: Record<string, number> | null): string {
-  if (!r || Object.keys(r).length === 0) return '—';
-  return Object.entries(r)
-    .map(([k, v]) => `${k}: ${formatQuantity(k, v)}`)
-    .join(', ');
-}
 
 @Component({
   imports: [
@@ -103,8 +96,8 @@ export class DeploymentsDashboard implements OnInit {
         containerRows: d.containers.map((c) => ({
           name: c.container_type,
           image: c.image,
-          requests: formatResources(c.requests),
-          limits: formatResources(c.limits),
+          requests: resourceLines(c.requests),
+          limits: resourceLines(c.limits),
         })),
       };
     });

@@ -1,7 +1,7 @@
 apiUrl: http://localhost:8005/api/
 # How often the dashboards poll live data (usage, pod status), in seconds.
 refreshIntervalSeconds: 5
-# Namespaces pre-selected in the pods and deployments filters (empty list = all).
+# Namespaces pre-selected in the dashboards' namespace filters (empty list = all).
 defaultNamespaces:
   - tmyts
 endpoints:
@@ -14,3 +14,4 @@ endpoints:
   deploymentMetrics: "deployment-metrics"
   podMetrics: "pod-metrics"
   jobMetrics: "job-metrics"
+  statefulset: "statefulsets"

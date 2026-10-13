@@ -60,12 +60,16 @@
               </div>
               <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 text-sm">
                 @for (item of [
-                  { label: 'Requests', value: c.requests },
-                  { label: 'Limits', value: c.limits },
+                  { label: 'Requests', lines: c.requests },
+                  { label: 'Limits', lines: c.limits },
                 ]; track item.label) {
                   <div>
                     <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ item.label }}</dt>
-                    <dd class="m-0 mt-0.5">{{ item.value }}</dd>
+                    @for (line of item.lines; track line) {
+                      <dd class="m-0 mt-0.5 tabular-nums">{{ line }}</dd>
+                    } @empty {
+                      <dd class="m-0 mt-0.5">—</dd>
+                    }
                   </div>
                 }
               </dl>
