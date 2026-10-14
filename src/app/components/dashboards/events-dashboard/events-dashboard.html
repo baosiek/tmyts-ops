@@ -1,4 +1,86 @@
-<app-page-header title="Events" subtitle="Recent cluster events." />
-<div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
-  Nothing to show yet.
-</div>
+<app-page-header title="Events" [loading]="loading()" subtitle="Recent cluster events." />
+<app-namespace-filter [state]="nsFilter" />
+
+<section
+  class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-(--mat-sys-outline-variant) bg-(--mat-sys-surface-container-low) p-4"
+  aria-label="Event filters"
+>
+  <mat-form-field class="w-full max-w-sm" subscriptSizing="dynamic">
+    <mat-label>Search</mat-label>
+    <input matInput #q type="search" [value]="search()" (input)="search.set(q.value)" />
+  </mat-form-field>
+  @if (typeCounts().length) {
+    <mat-chip-listbox aria-label="Filter by type" multiple [value]="types()" (change)="onTypes($event.value)">
+      @for (t of typeCounts(); track t.type) {
+        <mat-chip-option [value]="t.type">{{ t.type }} {{ t.count }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+  }
+  @if (filtered()) {
+    <button mat-button type="button" (click)="clearFilters()">Clear filters</button>
+  }
+  <p class="m-0 ml-auto text-sm text-(--mat-sys-on-surface-variant)">
+    {{ rows().length }}{{ filtered() ? ' of ' + totalInNamespaces() : '' }} {{ rows().length === 1 ? 'event' : 'events' }}
+    @if (warningCount() > 0) {
+      · <span class="font-bold text-(--mat-sys-error)">{{ warningCount() }} {{ warningCount() === 1 ? 'warning' : 'warnings' }}</span>
+    }
+  </p>
+</section>
+
+@if (rows().length > 0) {
+  <div class="overflow-x-auto rounded-xl border border-(--mat-sys-outline-variant)">
+    <table class="w-full border-collapse text-left text-sm">
+      <caption class="sr-only">Recent cluster events, newest first</caption>
+      <thead class="bg-(--mat-sys-surface-container-low)">
+        <tr>
+          @for (h of ['Time', 'Type', 'Namespace', 'Object', 'Reason', 'Message']; track h) {
+            <th scope="col" class="px-3 py-2 text-xs font-bold tracking-wide whitespace-nowrap text-(--mat-sys-on-surface-variant) uppercase">{{ h }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of rows(); track $index) {
+          <tr
+            class="border-t border-(--mat-sys-outline-variant) align-top"
+            [class]="e.warning ? 'bg-(--mat-sys-error-container)/40' : ''"
+          >
+            <td class="px-3 py-2 whitespace-nowrap" [title]="e.absolute">
+              <div class="tabular-nums">{{ e.ago }}</div>
+              <div class="text-xs text-(--mat-sys-on-surface-variant)">{{ e.absolute }}</div>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">
+              <span
+                class="inline-flex items-center gap-1.5 text-xs font-medium"
+                [class]="e.warning ? 'font-bold text-(--mat-sys-error)' : e.normal ? 'text-emerald-700' : ''"
+              >
+                <span
+                  class="size-2 rounded-full"
+                  [class]="e.warning ? 'bg-(--mat-sys-error)' : e.normal ? 'bg-[#0ca30c]' : 'bg-(--mat-sys-outline-variant)'"
+                  aria-hidden="true"
+                ></span>
+                {{ e.type_ || '—' }}
+              </span>
+            </td>
+            <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">{{ e.namespace }}</td>
+            <td class="min-w-56 px-3 py-2">
+              @if (e.kind) {
+                <div class="text-xs text-(--mat-sys-on-surface-variant)">{{ e.kind }}</div>
+              }
+              <div class="font-mono text-xs break-words">{{ e.name }}</div>
+            </td>
+            <td class="px-3 py-2 whitespace-nowrap">{{ e.reason }}</td>
+            <td class="px-3 py-2 break-words">{{ e.message }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+} @else if (!loading()) {
+  <div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
+    @if (totalInNamespaces() === 0) {
+      There are no recent events in the selected namespaces.
+    } @else {
+      No events match the current filters.
+    }
+  </div>
+}

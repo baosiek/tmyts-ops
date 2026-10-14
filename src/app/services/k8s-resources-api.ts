@@ -7,6 +7,7 @@ import { INodeUsage } from '../interfaces/i-node-usage';
 import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 import { IPodMetrics } from '../interfaces/i-pod-metrics';
+import { IEventInfo } from '../interfaces/i-event-info';
 import { IJobInfo } from '../interfaces/i-job-info';
 import { IJobLog } from '../interfaces/i-job-log';
 import { IJobMetrics } from '../interfaces/i-job-metrics';
@@ -79,6 +80,12 @@ export class K8sResourcesApi {
     restartWorkload(namespace: string, name: string, type: WorkloadType): Observable<IWorkloadActionResponse> {
         const url = `${this.baseUrl}${this.endpoints['restart']}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${type}`;
         return this.http.post<IWorkloadActionResponse>(url, null);
+    }
+
+    /** The latest cluster events (the server returns at most 50, newest first). */
+    getEvents(): Observable<IEventInfo[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['events']}`;
+        return this.http.get<IEventInfo[]>(url);
     }
 
     getJobMetrics(): Observable<IJobMetrics[]> {
