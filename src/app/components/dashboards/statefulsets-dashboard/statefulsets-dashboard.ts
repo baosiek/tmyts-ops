@@ -1,6 +1,8 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { RouterLink } from '@angular/router';
 import { MatDividerModule } from '@angular/material/divider';
 import { catchError, EMPTY, finalize, merge, Subject, switchMap, timer } from 'rxjs';
 import { APP_CONFIG, defaultNamespaces, refreshIntervalMs } from '../../../interfaces/i-app-config';
@@ -21,7 +23,7 @@ import { WorkloadActions } from '../../../shared/workload-actions/workload-actio
 const key = (namespace: string, name: string) => `${namespace}/${name}`;
 
 @Component({
-  imports: [PageHeader, MatCardModule, MatDividerModule, Echart, NamespaceFilter, WorkloadActions],
+  imports: [PageHeader, MatButtonModule, MatCardModule, MatDividerModule, Echart, NamespaceFilter, RouterLink, WorkloadActions],
   selector: 'app-statefulsets-dashboard',
   styleUrl: './statefulsets-dashboard.scss',
   templateUrl: './statefulsets-dashboard.html',

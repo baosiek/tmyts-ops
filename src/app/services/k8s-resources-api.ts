@@ -92,13 +92,14 @@ export class K8sResourcesApi {
     }
 
     /**
-     * Live logs of every pod of a deployment: the last 200 lines of each pod, then new lines as
+     * Live logs of every pod of a deployment or statefulset: the last 200 lines of each pod, then new lines as
      * they arrive, each prefixed "[pod] ". The server sends "(no pods found)" when none are running.
      * Completes with a `closed` event when the stream ends or breaks; it doesn't reconnect by
      * itself, because a reconnect would replay the last 200 lines and duplicate them.
      */
-    streamDeploymentLogs(namespace: string, name: string): Observable<LogStreamEvent> {
-        const url = `${this.baseUrl}${this.endpoints['deployments']}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/logs`;
+    streamWorkloadLogs(type: WorkloadType, namespace: string, name: string): Observable<LogStreamEvent> {
+        const endpoint = this.endpoints[type === 'Deployment' ? 'deployments' : 'statefulset'];
+        const url = `${this.baseUrl}${endpoint}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/logs`;
         return new Observable<LogStreamEvent>((subscriber) => {
             const source = new EventSource(url);
             source.onopen = () => subscriber.next({ kind: 'open' });

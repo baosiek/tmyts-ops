@@ -38,8 +38,15 @@ export const routes: Routes = [
                 },
                 {
                     path: 'deployments/:namespace/:name/logs',
+                    data: { type: 'Deployment' },
                     loadComponent: () =>
-                        import('./components/dashboards/deployment-logs/deployment-logs').then((m) => m.DeploymentLogs),
+                        import('./components/dashboards/workload-logs/workload-logs').then((m) => m.WorkloadLogs),
+                },
+                {
+                    path: 'statefulsets/:namespace/:name/logs',
+                    data: { type: 'StatefulSet' },
+                    loadComponent: () =>
+                        import('./components/dashboards/workload-logs/workload-logs').then((m) => m.WorkloadLogs),
                 },
                 {
                     path: 'jobs',

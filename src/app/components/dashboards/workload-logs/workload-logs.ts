@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { bufferTime, filter, map, Subscription, tap } from 'rxjs';
+import { WorkloadType } from '../../../interfaces/i-workload-action';
 import { K8sResourcesApi } from '../../../services/k8s-resources-api';
 import { LogViewer } from '../../../shared/log-viewer/log-viewer';
 import { PageHeader } from '../../../shared/page-header/page-header';
@@ -20,18 +21,26 @@ type Connection = 'connecting' | 'live' | 'closed';
 
 @Component({
   imports: [PageHeader, RouterLink, MatButtonModule, LogViewer],
-  selector: 'app-deployment-logs',
-  templateUrl: './deployment-logs.html',
+  selector: 'app-workload-logs',
+  templateUrl: './workload-logs.html',
 })
-export class DeploymentLogs implements OnInit {
+export class WorkloadLogs implements OnInit {
   private readonly api = inject(K8sResourcesApi);
   private readonly route = inject(ActivatedRoute);
   private subscription?: Subscription;
+
+  /** Which kind of workload, from the route's data: 'Deployment' or 'StatefulSet'. */
+  protected readonly type: WorkloadType = this.route.snapshot.data['type'];
+  /** For the page's wording and its back link. */
+  protected readonly label = this.type === 'StatefulSet' ? 'StatefulSet' : 'Deployment';
+  protected readonly listPath = this.type === 'StatefulSet' ? '/dashboards/statefulsets' : '/dashboards/deployments';
 
   protected readonly namespace = signal('');
   protected readonly name = signal('');
   protected readonly lines = signal<string[]>([]);
   protected readonly connection = signal<Connection>('connecting');
+  /** Whether the stream ever connected; a stream that closes without connecting never got logs (e.g. the server answered an error). */
+  protected readonly opened = signal(false);
   /** The server found no running pods for this deployment. */
   protected readonly noPods = signal(false);
 
@@ -52,13 +61,17 @@ export class DeploymentLogs implements OnInit {
     this.subscription?.unsubscribe();
     this.lines.set([]);
     this.noPods.set(false);
+    this.opened.set(false);
     this.connection.set('connecting');
 
     this.subscription = this.api
-      .streamDeploymentLogs(this.namespace(), this.name())
+      .streamWorkloadLogs(this.type, this.namespace(), this.name())
       .pipe(
         tap((event) => {
-          if (event.kind === 'open') this.connection.set('live');
+          if (event.kind === 'open') {
+            this.opened.set(true);
+            this.connection.set('live');
+          }
           else if (event.kind === 'closed') this.connection.set('closed');
           else if (event.line === NO_PODS) this.noPods.set(true);
         }),

@@ -98,6 +98,7 @@
         </div>
       </mat-card-content>
       <mat-card-actions class="px-2 pb-2">
+        <a mat-button [routerLink]="['/dashboards/statefulsets', set.namespace, set.name, 'logs']">View logs</a>
         <app-workload-actions
           [namespace]="set.namespace"
           [name]="set.name"

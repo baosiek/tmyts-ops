@@ -1,18 +1,18 @@
-<a mat-button routerLink="/dashboards/deployments" class="-ml-3 mb-2">← Back to deployments</a>
-<app-page-header title="Deployment logs" [loading]="connection() === 'connecting'" [subtitle]="namespace() + ' / ' + name()" />
+<a mat-button [routerLink]="listPath" class="-ml-3 mb-2">← Back to {{ label === 'StatefulSet' ? 'StatefulSets' : 'deployments' }}</a>
+<app-page-header [title]="label + ' logs'" [loading]="connection() === 'connecting'" [subtitle]="namespace() + ' / ' + name()" />
 
 @if (connection() === 'closed' && !noPods()) {
   <div role="alert" class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-(--mat-sys-error-container) px-4 py-3 text-sm text-(--mat-sys-on-error-container)">
-    <span class="font-bold">The log stream was interrupted.</span>
+    <span class="font-bold">{{ opened() ? 'The log stream was interrupted.' : "Couldn't open the log stream." }}</span>
     <button mat-stroked-button type="button" (click)="connect()">Reconnect</button>
   </div>
 }
 
 @if (noPods()) {
   <div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
-    This deployment has no running pods, so there are no logs to stream. It may be scaled down to zero.
+    This {{ label }} has no running pods, so there are no logs to stream. It may be scaled down to zero.
   </div>
-} @else if (connection() !== 'connecting' || lines().length > 0) {
+} @else if (opened() || lines().length > 0) {
   <app-log-viewer
     [lines]="lines()"
     [status]="connection() === 'live' ? 'Live · last 200 lines per pod, then new lines as they arrive' : 'Disconnected'"
