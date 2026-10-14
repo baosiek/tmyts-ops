@@ -9,13 +9,15 @@ import { K8sResourcesApi } from '../../../services/k8s-resources-api';
 import { NamespaceFilter } from '../../../shared/namespace-filter/namespace-filter';
 import { NamespaceFilterState } from '../../../shared/namespace-filter/namespace-filter-state';
 import { PageHeader } from '../../../shared/page-header/page-header';
-import { catchError, EMPTY, switchMap, timer, finalize } from 'rxjs';
+import { catchError, EMPTY, finalize, merge, Subject, switchMap, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { IDeploymentMetrics } from '../../../interfaces/i-deployment-metrics';
 import { Echart } from '../../../shared/echart/echart';
 import { replicaRingOption, USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/echart/charts';
 import { formatQuantity, resourceLines } from '../../../shared/format-quantity';
 import { usageHeading } from '../../../shared/usage-heading';
+import { ActionProgress } from '../../../shared/workload-actions/action-progress';
+import { WorkloadActions } from '../../../shared/workload-actions/workload-actions';
 
 /** Key that ties metrics to a deployment. */
 const metricsKey = (namespace: string, name: string) => `${namespace}/${name}`;
@@ -29,6 +31,7 @@ const metricsKey = (namespace: string, name: string) => `${namespace}/${name}`;
     NamespaceFilter,
     MatButtonModule,
     RouterLink,
+    WorkloadActions,
   ],
   selector: 'app-deployments-dashboard',
   styleUrl: './deployments-dashboard.scss',
@@ -49,6 +52,11 @@ export class DeploymentsDashboard implements OnInit {
   /** Recent usage samples per deployment, oldest first, covering USAGE_WINDOW_MS. */
   private readonly history = signal<Record<string, UsageSample[]>>({});
   private readonly lastSampleAt = signal(Date.now());
+
+  /** Scale and restart requests made from the cards, and whether they're still under way. */
+  private readonly actions = new ActionProgress();
+  /** Fires to poll right away, e.g. after a scale request, instead of waiting for the next tick. */
+  private readonly refresh$ = new Subject<void>();
 
   protected readonly nsFilter = new NamespaceFilterState(
     () => this.deployments().map((d) => d.namespace),
@@ -83,6 +91,7 @@ export class DeploymentsDashboard implements OnInit {
         ...d,
         healthy,
         status: d.replicas === 0 ? 'Scaled down' : healthy ? 'Healthy' : 'Degraded',
+        progress: this.actions.label(id, { desired: d.replicas, ready: d.ready_replicas, updated: d.updated_replicas }),
         replicaRows: [
           { label: 'Ready', count: d.ready_replicas },
           { label: 'Available', count: d.available_replicas },
@@ -105,7 +114,7 @@ export class DeploymentsDashboard implements OnInit {
 
   ngOnInit(): void {
     // Poll the list too, so a scaled deployment (a new desired count) or a new one shows up without a reload.
-    timer(0, this.refreshMs)
+    merge(timer(0, this.refreshMs), this.refresh$)
       .pipe(
         switchMap(() =>
           this.api.getDeployments().pipe(
@@ -117,12 +126,22 @@ export class DeploymentsDashboard implements OnInit {
       )
       .subscribe((deployments) => this.deployments.set(deployments));
 
-    timer(0, this.refreshMs)
+    merge(timer(0, this.refreshMs), this.refresh$)
       .pipe(
         switchMap(() => this.api.getDeploymentMetrics().pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((metrics) => this.recordSamples(metrics));
+  }
+
+  protected onScaled(deployment: { namespace: string; name: string }, replicas: number): void {
+    this.actions.scaling(metricsKey(deployment.namespace, deployment.name), replicas);
+    this.refresh$.next();
+  }
+
+  protected onRestarted(deployment: { namespace: string; name: string }): void {
+    this.actions.restarting(metricsKey(deployment.namespace, deployment.name));
+    this.refresh$.next();
   }
 
   /** Keeps the latest metrics per deployment and appends a usage sample, dropping old ones. */

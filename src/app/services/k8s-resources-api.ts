@@ -13,6 +13,7 @@ import { IJobMetrics } from '../interfaces/i-job-metrics';
 import { IPodInfo } from '../interfaces/i-pod-info';
 import { IStatefulSetInfo } from '../interfaces/i-statefulset-info';
 import { IStatefulSetMetrics } from '../interfaces/i-statefulset-metrics';
+import { IScaleRequest, IWorkloadActionResponse, WorkloadType } from '../interfaces/i-workload-action';
 
 @Service()
 export class K8sResourcesApi {
@@ -65,6 +66,19 @@ export class K8sResourcesApi {
     getStatefulSetMetrics(): Observable<IStatefulSetMetrics[]> {
         let url: string = `${this.baseUrl}${this.endpoints['statefulsetMetrics']}`;
         return this.http.get<IStatefulSetMetrics[]>(url);
+    }
+
+    /** Sets the desired replica count. The server answers 202 right away; the pods follow. */
+    scaleWorkload(namespace: string, name: string, type: WorkloadType, replicas: number): Observable<IWorkloadActionResponse> {
+        const url = `${this.baseUrl}${this.endpoints['scale']}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${type}`;
+        const body: IScaleRequest = { replicas };
+        return this.http.post<IWorkloadActionResponse>(url, body);
+    }
+
+    /** Starts a rolling restart (like `kubectl rollout restart`). The server answers 202 right away. */
+    restartWorkload(namespace: string, name: string, type: WorkloadType): Observable<IWorkloadActionResponse> {
+        const url = `${this.baseUrl}${this.endpoints['restart']}/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}/${type}`;
+        return this.http.post<IWorkloadActionResponse>(url, null);
     }
 
     getJobMetrics(): Observable<IJobMetrics[]> {

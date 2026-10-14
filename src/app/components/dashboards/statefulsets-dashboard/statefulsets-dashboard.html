@@ -97,6 +97,17 @@
           }
         </div>
       </mat-card-content>
+      <mat-card-actions class="px-2 pb-2">
+        <app-workload-actions
+          [namespace]="set.namespace"
+          [name]="set.name"
+          type="StatefulSet"
+          [replicas]="set.replicas"
+          [progress]="set.progress"
+          (scaled)="onScaled(set, $event)"
+          (restarted)="onRestarted(set)"
+        />
+      </mat-card-actions>
     </mat-card>
   } @empty {
     @if (!loading()) {

@@ -7,6 +7,8 @@ export interface IAppConfig {
     refreshIntervalSeconds?: number;
     /** Namespaces pre-selected in the dashboards' namespace filter; none means all. */
     defaultNamespaces?: string[] | string;
+    /** Show the Scale and Restart buttons on the cards. Defaults to true; set false for a read-only dashboard. */
+    actionsEnabled?: boolean;
 }
 
 /** Fallback when config.yaml has no (or an invalid) refreshIntervalSeconds. */
@@ -17,6 +19,11 @@ export function defaultNamespaces(config: IAppConfig): string[] {
     const value = config.defaultNamespaces;
     const list = Array.isArray(value) ? value : value ? [value] : [];
     return list.map(String).filter((ns) => ns.length > 0);
+}
+
+/** Whether the cards offer Scale and Restart; on unless config.yaml says `actionsEnabled: false`. */
+export function actionsEnabled(config: IAppConfig): boolean {
+    return config.actionsEnabled !== false;
 }
 
 /** The dashboards' polling interval in milliseconds, never below one second. */

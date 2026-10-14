@@ -2,7 +2,7 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
-import { catchError, EMPTY, finalize, switchMap, timer } from 'rxjs';
+import { catchError, EMPTY, finalize, merge, Subject, switchMap, timer } from 'rxjs';
 import { APP_CONFIG, defaultNamespaces, refreshIntervalMs } from '../../../interfaces/i-app-config';
 import { IStatefulSetInfo } from '../../../interfaces/i-statefulset-info';
 import { IStatefulSetMetrics } from '../../../interfaces/i-statefulset-metrics';
@@ -15,11 +15,13 @@ import { NamespaceFilterState } from '../../../shared/namespace-filter/namespace
 import { PageHeader } from '../../../shared/page-header/page-header';
 import { ringClass, StatusTone } from '../../../shared/status-ring';
 import { usageHeading } from '../../../shared/usage-heading';
+import { ActionProgress } from '../../../shared/workload-actions/action-progress';
+import { WorkloadActions } from '../../../shared/workload-actions/workload-actions';
 
 const key = (namespace: string, name: string) => `${namespace}/${name}`;
 
 @Component({
-  imports: [PageHeader, MatCardModule, MatDividerModule, Echart, NamespaceFilter],
+  imports: [PageHeader, MatCardModule, MatDividerModule, Echart, NamespaceFilter, WorkloadActions],
   selector: 'app-statefulsets-dashboard',
   styleUrl: './statefulsets-dashboard.scss',
   templateUrl: './statefulsets-dashboard.html',
@@ -41,6 +43,11 @@ export class StatefulSetsDashboard implements OnInit {
   private readonly history = signal<Record<string, UsageSample[]>>({});
   private readonly lastSampleAt = signal(Date.now());
 
+  /** Scale and restart requests made from the cards, and whether they're still under way. */
+  private readonly actions = new ActionProgress();
+  /** Fires to poll right away, e.g. after a scale request, instead of waiting for the next tick. */
+  private readonly refresh$ = new Subject<void>();
+
   protected readonly nsFilter = new NamespaceFilterState(
     () => this.statefulSets().map((s) => s.namespace),
     defaultNamespaces(this.config),
@@ -59,7 +66,8 @@ export class StatefulSetsDashboard implements OnInit {
         const m = latestMetrics[id];
         const samples = history[id] ?? [];
         const latest = samples.at(-1);
-        const replicas = m?.replicas ?? s.replicas;
+        // Desired replicas come from the list (spec); the metrics' count is the number of pods that exist.
+        const replicas = s.replicas;
         const ready = m ? (m.ready_replicas ?? 0) : null;
         const tone: StatusTone = ready === null || replicas === 0 ? 'neutral' : ready >= replicas ? 'good' : 'critical';
         return {
@@ -75,6 +83,7 @@ export class StatefulSetsDashboard implements OnInit {
                 { label: 'Updated', count: m.updated_replicas ?? 0 },
               ].map((c) => ({ ...c, behind: c.count < replicas }))
             : [],
+          progress: this.actions.label(id, { desired: replicas, ready: ready ?? 0, updated: m?.updated_replicas ?? 0 }),
           revision: m?.update_revision ?? null,
           conditions: m?.conditions ?? [],
           usageOption: usageChartOption(samples, now, formatQuantity, {
@@ -95,17 +104,35 @@ export class StatefulSetsDashboard implements OnInit {
   protected readonly ringClass = ringClass;
 
   ngOnInit(): void {
-    this.api
-      .getStatefulSetsInfo()
-      .pipe(finalize(() => this.loading.set(false)))
+    // Poll the list too, so a scaled StatefulSet (a new desired count) shows up without a reload.
+    merge(timer(0, this.refreshMs), this.refresh$)
+      .pipe(
+        switchMap(() =>
+          this.api.getStatefulSetsInfo().pipe(
+            finalize(() => this.loading.set(false)),
+            catchError(() => EMPTY),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((statefulSets) => this.statefulSets.set(statefulSets));
 
-    timer(0, this.refreshMs)
+    merge(timer(0, this.refreshMs), this.refresh$)
       .pipe(
         switchMap(() => this.api.getStatefulSetMetrics().pipe(catchError(() => EMPTY))),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((metrics) => this.recordSamples(metrics));
+  }
+
+  protected onScaled(set: { namespace: string; name: string }, replicas: number): void {
+    this.actions.scaling(key(set.namespace, set.name), replicas);
+    this.refresh$.next();
+  }
+
+  protected onRestarted(set: { namespace: string; name: string }): void {
+    this.actions.restarting(key(set.namespace, set.name));
+    this.refresh$.next();
   }
 
   /** Keeps the latest metrics and appends a total-usage sample per StatefulSet, dropping old ones. */

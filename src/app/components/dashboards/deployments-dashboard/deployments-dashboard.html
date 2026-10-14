@@ -97,6 +97,15 @@
       </mat-card-content>
       <mat-card-actions class="px-2 pb-2">
         <a mat-button [routerLink]="['/dashboards/deployments', deployment.namespace, deployment.name, 'logs']">View logs</a>
+        <app-workload-actions
+          [namespace]="deployment.namespace"
+          [name]="deployment.name"
+          type="Deployment"
+          [replicas]="deployment.replicas"
+          [progress]="deployment.progress"
+          (scaled)="onScaled(deployment, $event)"
+          (restarted)="onRestarted(deployment)"
+        />
       </mat-card-actions>
     </mat-card>
   }

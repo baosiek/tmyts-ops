@@ -1,0 +1,18 @@
+@if (enabled) {
+  <div class="flex flex-wrap items-center">
+    <button mat-button type="button" [disabled]="busy()" (click)="scale()">Scale</button>
+    <button
+      mat-button
+      type="button"
+      [disabled]="busy() || replicas() === 0"
+      [title]="replicas() === 0 ? 'Scaled down: there are no pods to restart' : ''"
+      (click)="restart()"
+    >Restart</button>
+    @if (status(); as text) {
+      <span class="ml-2 inline-flex items-center gap-2 text-xs text-(--mat-sys-on-surface-variant)" role="status">
+        <mat-progress-spinner mode="indeterminate" diameter="14" strokeWidth="2" aria-label="In progress" />
+        {{ text }}
+      </span>
+    }
+  </div>
+}

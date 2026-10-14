@@ -4,6 +4,9 @@ refreshIntervalSeconds: 5
 # Namespaces pre-selected in the dashboards' namespace filters (empty list = all).
 defaultNamespaces:
   - tmyts
+# Show the Scale and Restart buttons on deployment and statefulset cards. The API has no
+# authentication, so set false for a read-only dashboard.
+actionsEnabled: true
 endpoints:
   nodes: "nodes"
   pods: "pods"
@@ -16,3 +19,5 @@ endpoints:
   jobMetrics: "job-metrics"
   statefulset: "statefulsets"
   statefulsetMetrics: "statefulset-metrics"
+  scale: "scale"
+  restart: "restart"
