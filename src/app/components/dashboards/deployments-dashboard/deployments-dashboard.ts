@@ -17,8 +17,8 @@ import { replicaRingOption, USAGE_WINDOW_MS, usageChartOption, UsageSample } fro
 import { formatQuantity, resourceLines } from '../../../shared/format-quantity';
 import { usageHeading } from '../../../shared/usage-heading';
 
-/** Key that ties metrics to a deployment; the server doesn't send namespaces yet. */
-const metricsKey = (name: string, namespace?: string) => (namespace ? `${namespace}/${name}` : name);
+/** Key that ties metrics to a deployment. */
+const metricsKey = (namespace: string, name: string) => `${namespace}/${name}`;
 
 @Component({
   imports: [
@@ -44,6 +44,8 @@ export class DeploymentsDashboard implements OnInit {
   protected readonly loading = signal(true);
 
   private readonly deployments = signal<IDeploymentInfo[]>([]);
+  /** The latest metrics per deployment, with the live replica counts and conditions. */
+  private readonly latestMetrics = signal<Record<string, IDeploymentMetrics>>({});
   /** Recent usage samples per deployment, oldest first, covering USAGE_WINDOW_MS. */
   private readonly history = signal<Record<string, UsageSample[]>>({});
   private readonly lastSampleAt = signal(Date.now());
@@ -60,10 +62,22 @@ export class DeploymentsDashboard implements OnInit {
   /** Each deployment with its chart options and display-ready container resources. */
   protected readonly cards = computed(() => {
     const history = this.history();
+    const latestMetrics = this.latestMetrics();
     const now = this.lastSampleAt();
-    return this.visibleDeployments().map((d) => {
-      const samples = history[metricsKey(d.name, d.namespace)] ?? history[metricsKey(d.name)] ?? [];
+    return this.visibleDeployments().map((info) => {
+      const id = metricsKey(info.namespace, info.name);
+      const samples = history[id] ?? [];
       const latest = samples.at(-1);
+      const m = latestMetrics[id];
+      // Live counts and conditions come with the metrics; the list (fetched once, then on each refresh)
+      // fills in until a metrics entry arrives. Desired replicas always come from the list.
+      const d: IDeploymentInfo = {
+        ...info,
+        ready_replicas: m?.ready_replicas ?? info.ready_replicas,
+        available_replicas: m?.available_replicas ?? info.available_replicas,
+        updated_replicas: m?.updated_replicas ?? info.updated_replicas,
+        conditions: m?.conditions ?? info.conditions,
+      };
       const healthy = d.replicas > 0 && d.available_replicas === d.replicas && d.ready_replicas === d.replicas;
       return {
         ...d,
@@ -90,9 +104,17 @@ export class DeploymentsDashboard implements OnInit {
   });
 
   ngOnInit(): void {
-    this.api
-      .getDeployments()
-      .pipe(finalize(() => this.loading.set(false)))
+    // Poll the list too, so a scaled deployment (a new desired count) or a new one shows up without a reload.
+    timer(0, this.refreshMs)
+      .pipe(
+        switchMap(() =>
+          this.api.getDeployments().pipe(
+            finalize(() => this.loading.set(false)),
+            catchError(() => EMPTY),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((deployments) => this.deployments.set(deployments));
 
     timer(0, this.refreshMs)
@@ -103,18 +125,21 @@ export class DeploymentsDashboard implements OnInit {
       .subscribe((metrics) => this.recordSamples(metrics));
   }
 
-  /** Appends one sample per deployment and drops samples older than the window. */
+  /** Keeps the latest metrics per deployment and appends a usage sample, dropping old ones. */
   private recordSamples(metrics: IDeploymentMetrics[]): void {
     const t = Date.now();
     const cutoff = t - USAGE_WINDOW_MS;
     const previous = this.history();
     const next: Record<string, UsageSample[]> = {};
+    const latest: Record<string, IDeploymentMetrics> = {};
     for (const m of metrics) {
-      const key = metricsKey(m.metadata.name, m.metadata.namespace);
+      const key = metricsKey(m.metadata.namespace, m.metadata.name);
+      latest[key] = m;
       const sum = (k: string) => m.containers.reduce((total, c) => total + (c.usage[k] ?? 0), 0);
       next[key] = [...(previous[key] ?? []).filter((s) => s.t >= cutoff), { t, cpu: sum('cpu'), memory: sum('memory') }];
     }
     this.history.set(next);
+    this.latestMetrics.set(latest);
     this.lastSampleAt.set(t);
   }
 }

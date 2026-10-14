@@ -20,9 +20,10 @@ const TEXT_PRIMARY = '#1b1b1f';
 const TEXT_SECONDARY = '#52514e';
 const GRID_LINE = 'rgba(0, 0, 0, 0.08)';
 const RING_TRACK = 'rgba(0, 0, 0, 0.08)';
+const ALERT_TRACK = 'rgba(208, 59, 59, 0.35)';
 
 /** A progress ring filled to `pct` (0-100) with `label` in the middle. */
-function ringOption(pct: number, label: string, color: string): EChartOption {
+function ringOption(pct: number, label: string, color: string, track = RING_TRACK): EChartOption {
   return {
     animationDuration: 400,
     series: [
@@ -37,7 +38,7 @@ function ringOption(pct: number, label: string, color: string): EChartOption {
         // Transparent at 0%, where a zero-length arc would still draw its rounded cap
         // as a dot. Not `show: false`: ECharts throws when an update later turns it on.
         progress: { show: true, roundCap: true, width: 8, itemStyle: { color, opacity: pct > 0 ? 1 : 0 } },
-        axisLine: { lineStyle: { width: 8, color: [[1, RING_TRACK]] } },
+        axisLine: { lineStyle: { width: 8, color: [[1, track]] } },
         axisTick: { show: false },
         splitLine: { show: false },
         axisLabel: { show: false },
@@ -59,7 +60,9 @@ function ringOption(pct: number, label: string, color: string): EChartOption {
 export function replicaRingOption(ready: number, desired: number): EChartOption {
   const pct = desired === 0 ? 0 : Math.min(100, (ready / desired) * 100);
   const color = desired === 0 ? TEXT_SECONDARY : ready >= desired ? GOOD : CRITICAL;
-  return ringOption(pct, `${ready}/${desired}`, color);
+  // With nothing ready there's no arc to color, so tint the whole ring: it mustn't look like a scaled-down one.
+  const track = desired > 0 && ready === 0 ? ALERT_TRACK : RING_TRACK;
+  return ringOption(pct, `${ready}/${desired}`, color, track);
 }
 
 /** Usage above this share of capacity turns a usage ring red. */
