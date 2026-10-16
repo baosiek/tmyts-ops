@@ -2,10 +2,15 @@
     <mat-sidenav mode="side" [opened]="true">
         <div class="p-2">
             <p class="px-4 pb-1 pt-3 text-xs font-medium uppercase font-bold tracking-wider text-(--mat-sys-on-surface-variant)">Projects</p>
+            @if (failed()) {
+                <p class="m-0 px-4 py-2 text-sm text-(--mat-sys-error)" role="alert">Couldn't load the projects.</p>
+            } @else if (!loading() && projects().length === 0) {
+                <p class="m-0 px-4 py-2 text-sm text-(--mat-sys-on-surface-variant)">No projects with a ci.yml were found.</p>
+            }
             <mat-nav-list>
-                @for (p of projectList; track p.path) {
-                <a mat-list-item [routerLink]="p.path" routerLinkActive #rla="routerLinkActive"
-                    [activated]="rla.isActive">{{p.label}}</a>
+                @for (repo of projects(); track repo) {
+                <a mat-list-item [routerLink]="repo" routerLinkActive #rla="routerLinkActive"
+                    [activated]="rla.isActive">{{repo}}</a>
                 }
             </mat-nav-list>
         </div>

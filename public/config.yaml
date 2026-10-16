@@ -7,6 +7,8 @@ defaultNamespaces:
 # Show the Scale and Restart buttons on deployment and statefulset cards. The API has no
 # authentication, so set false for a read-only dashboard.
 actionsEnabled: true
+# The GitHub account whose repositories the Projects section runs workflows for.
+githubOwner: baosiek
 endpoints:
   nodes: "nodes"
   pods: "pods"
@@ -21,3 +23,6 @@ endpoints:
   statefulsetMetrics: "statefulset-metrics"
   scale: "scale"
   restart: "restart"
+  projects: "projects"
+  executeProjectActions: "execute-project-actions"
+  monitorProjectActions: "monitor-project-actions"

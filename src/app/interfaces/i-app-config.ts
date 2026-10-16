@@ -9,6 +9,8 @@ export interface IAppConfig {
     defaultNamespaces?: string[] | string;
     /** Show the Scale and Restart buttons on the cards. Defaults to true; set false for a read-only dashboard. */
     actionsEnabled?: boolean;
+    /** The GitHub account (owner) of the repositories the Projects section works with. */
+    githubOwner?: string;
 }
 
 /** Fallback when config.yaml has no (or an invalid) refreshIntervalSeconds. */
@@ -24,6 +26,11 @@ export function defaultNamespaces(config: IAppConfig): string[] {
 /** Whether the cards offer Scale and Restart; on unless config.yaml says `actionsEnabled: false`. */
 export function actionsEnabled(config: IAppConfig): boolean {
     return config.actionsEnabled !== false;
+}
+
+/** The GitHub owner from config.yaml; empty when it isn't set. */
+export function githubOwner(config: IAppConfig): string {
+    return String(config.githubOwner ?? '').trim();
 }
 
 /** The dashboards' polling interval in milliseconds, never below one second. */

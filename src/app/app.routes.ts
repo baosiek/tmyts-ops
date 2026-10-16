@@ -1,11 +1,6 @@
 import { Routes } from '@angular/router';
 import { Projects } from './components/projects/projects';
 import { Dashboards } from './components/dashboards/dashboards';
-import { Ui } from './components/projects/ui/ui';
-import { Bot } from './components/projects/bot/bot';
-import { Ibserver } from './components/projects/ibserver/ibserver';
-import { Microservices } from './components/projects/microservices/microservices';
-import { Trade } from './components/projects/trade/trade';
 
 export const routes: Routes = [
         { path: '', pathMatch: 'full', redirectTo: 'dashboards' }, // Default landing page
@@ -68,13 +63,13 @@ export const routes: Routes = [
         { 
             path: 'projects', 
             component: Projects,
-                        children: [
-                { path: '', pathMatch: 'full', redirectTo: 'ui' },
-                { path: 'ui', component: Ui },
-                { path: 'bot', component: Bot },
-                { path: 'ibserver', component: Ibserver },
-                { path: 'microservices', component: Microservices },
-                { path: 'trade', component: Trade },
+                        // One page per repository the server lists; the shell redirects to the first one.
+            children: [
+                {
+                    path: ':repo',
+                    loadComponent: () =>
+                        import('./components/projects/project/project').then((m) => m.Project),
+                },
             ]
         }
 ];

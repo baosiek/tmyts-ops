@@ -1,0 +1,136 @@
+<app-page-header [title]="repo()" [subtitle]="owner + '/' + repo() + ' · ' + workflow" />
+
+<section
+  class="mb-4 flex flex-col gap-3 rounded-xl border border-(--mat-sys-outline-variant) bg-(--mat-sys-surface-container-low) p-4"
+  aria-label="Run the workflow"
+>
+  <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
+    <div>
+      <p class="m-0 text-base font-medium">Run CI</p>
+      <p class="m-0 mt-0.5 text-sm text-(--mat-sys-on-surface-variant)">Starts {{ workflow }} on GitHub by hand, without a push.</p>
+    </div>
+    <a mat-button [href]="githubUrl()" target="_blank" rel="noopener">Open repository ↗</a>
+  </div>
+
+  @if (actionsOn) {
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+      <mat-form-field class="w-56" subscriptSizing="dynamic">
+        <mat-label>Branch</mat-label>
+        <input matInput #b autocomplete="off" [value]="branch()" (input)="branch.set(b.value)" [disabled]="busy()" />
+      </mat-form-field>
+      <button mat-flat-button type="button" [disabled]="busy() || !branch().trim()" (click)="confirmRun()">Run CI</button>
+      @if (starting()) {
+        <span class="inline-flex items-center gap-2 text-sm text-(--mat-sys-on-surface-variant)" role="status">
+          <mat-progress-spinner mode="indeterminate" diameter="16" strokeWidth="2" aria-label="Starting" />
+          Starting the workflow… GitHub can take a minute to report the run.
+        </span>
+      }
+    </div>
+  }
+
+  @if (startError(); as message) {
+    <div role="alert" class="rounded-lg bg-(--mat-sys-error-container) px-3 py-2 text-sm text-(--mat-sys-on-error-container)">{{ message }}</div>
+  }
+</section>
+
+@if (runInfo(); as info) {
+  @if (status(); as s) {
+    <section class="rounded-xl border border-(--mat-sys-outline-variant) p-4" aria-label="Latest run">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h2 class="m-0 text-lg font-medium break-words">{{ info.title || 'Workflow run' }}</h2>
+          <p class="m-0 mt-0.5 font-mono text-xs text-(--mat-sys-on-surface-variant)">run {{ info.id }}</p>
+        </div>
+        <span class="inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-medium" [class]="chipClass(s.tone)">
+          @if (s.state === 'running') {
+            <mat-progress-spinner mode="indeterminate" diameter="14" strokeWidth="2" aria-label="Running" />
+          } @else {
+            <span class="size-1.5 rounded-full bg-current"></span>
+          }
+          {{ s.label }}
+        </span>
+      </div>
+
+      <dl class="m-0 mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-4">
+        <div>
+          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Branch</dt>
+          <dd class="m-0 mt-0.5 font-mono">{{ info.branch }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
+          <dd class="m-0 mt-0.5">{{ startedText() }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ s.final ? 'Took' : 'Elapsed' }}</dt>
+          <dd class="m-0 mt-0.5 tabular-nums">{{ s.final && durationUnknown() ? '—' : elapsed() }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">On GitHub</dt>
+          <dd class="m-0 mt-0.5"><a [href]="info.htmlUrl" target="_blank" rel="noopener" class="underline">Open the run ↗</a></dd>
+        </div>
+      </dl>
+
+      @if (lostContact()) {
+        <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--mat-sys-error-container) px-3 py-2 text-sm text-(--mat-sys-on-error-container)">
+          <span>Lost contact with the server while watching this run.</span>
+          <button mat-stroked-button type="button" (click)="retryWatching()">Try again</button>
+        </div>
+      }
+      @if (resultUnknown()) {
+        <p class="m-0 mt-4 rounded-lg bg-(--mat-sys-surface-container) px-3 py-2 text-sm text-(--mat-sys-on-surface-variant)">
+          The run has finished, but the server doesn't report whether it passed. Open it on GitHub to see the result.
+        </p>
+      }
+
+      <div class="mt-5 flex flex-col gap-4">
+        @if (stepSummary()) {
+          <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)" role="status">{{ stepSummary() }} done</p>
+        }
+        @for (job of jobs(); track job.name) {
+          <div class="rounded-lg bg-(--mat-sys-surface-container-low) p-3">
+            <div class="flex items-center justify-between gap-3">
+              <p class="m-0 text-sm font-medium">{{ job.name }}</p>
+              <span class="flex items-center gap-2">
+                @if (job.steps.length) {
+                  <span class="text-xs text-(--mat-sys-on-surface-variant) tabular-nums">{{ job.done }} of {{ job.steps.length }} steps</span>
+                }
+                <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="chipClass(job.status.tone)">{{ job.status.label }}</span>
+              </span>
+            </div>
+            @if (job.steps.length) {
+              <mat-progress-bar class="mt-2" mode="determinate" [value]="job.percent" [attr.aria-label]="job.name + ' progress'" />
+              <ol class="m-0 mt-3 flex list-none flex-col gap-0.5 p-0 text-sm">
+                @for (step of job.steps; track $index) {
+                  <li
+                    class="flex items-center gap-2 rounded px-1.5 py-0.5"
+                    [class]="step.status.state === 'running' ? 'bg-amber-100/70 font-medium' : step.status.tone === 'critical' ? 'bg-(--mat-sys-error-container)/40' : ''"
+                  >
+                    <span class="inline-flex w-4 justify-center font-bold" [class]="glyphClass(step.status.state)" aria-hidden="true">
+                      @if (step.status.state === 'running') {
+                        <mat-progress-spinner mode="indeterminate" diameter="12" strokeWidth="2" />
+                      } @else if (step.status.state === 'success') {
+                        <span class="tick">✓</span>
+                      } @else {
+                        {{ glyph(step.status.state) }}
+                      }
+                    </span>
+                    <span class="min-w-0 flex-1 break-words">{{ step.name }}</span>
+                    <span class="text-xs text-(--mat-sys-on-surface-variant)">{{ step.status.label }}</span>
+                  </li>
+                }
+              </ol>
+            } @else {
+              <p class="m-0 mt-2 text-sm text-(--mat-sys-on-surface-variant)">Waiting for a runner to pick this job up…</p>
+            }
+          </div>
+        } @empty {
+          <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)">Waiting for GitHub to report the jobs…</p>
+        }
+      </div>
+    </section>
+  }
+} @else if (!starting()) {
+  <div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
+    No run started from here yet. Press <b>Run CI</b> to start one.
+  </div>
+}

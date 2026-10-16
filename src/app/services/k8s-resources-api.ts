@@ -1,12 +1,13 @@
 import { inject, Service } from '@angular/core';
 import { APP_CONFIG } from '../interfaces/i-app-config';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 import { INodeInfo } from '../interfaces/i-node-info';
 import { HttpClient } from '@angular/common/http';
 import { INodeUsage } from '../interfaces/i-node-usage';
 import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 import { IPodMetrics } from '../interfaces/i-pod-metrics';
+import { IActionsInfo, IActionsMetrics, IActionsRequest } from '../interfaces/i-project-actions';
 import { IEventInfo } from '../interfaces/i-event-info';
 import { IJobInfo } from '../interfaces/i-job-info';
 import { IJobLog } from '../interfaces/i-job-log';
@@ -86,6 +87,27 @@ export class K8sResourcesApi {
     getEvents(): Observable<IEventInfo[]> {
         let url: string = `${this.baseUrl}${this.endpoints['events']}`;
         return this.http.get<IEventInfo[]>(url);
+    }
+
+    /** The repositories (folder names) that have a ci.yml workflow. */
+    getProjects(): Observable<string[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['projects']}`;
+        return this.http.get<string[]>(url);
+    }
+
+    /**
+     * Starts a workflow on GitHub. The server waits for the run to appear, up to about 90 seconds
+     * (then answers 504), so this allows a little longer before giving up on its own.
+     */
+    executeProjectActions(owner: string, repo: string, request: IActionsRequest): Observable<IActionsInfo[]> {
+        const url = `${this.baseUrl}${this.endpoints['executeProjectActions']}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+        return this.http.post<IActionsInfo[]>(url, request).pipe(timeout(100_000));
+    }
+
+    /** One snapshot of a run; the caller polls until the run is final. */
+    monitorProjectActions(owner: string, repo: string, runId: number): Observable<IActionsMetrics> {
+        const url = `${this.baseUrl}${this.endpoints['monitorProjectActions']}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/${runId}`;
+        return this.http.get<IActionsMetrics>(url);
     }
 
     getJobMetrics(): Observable<IJobMetrics[]> {

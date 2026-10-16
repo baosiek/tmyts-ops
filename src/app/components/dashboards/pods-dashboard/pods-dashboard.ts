@@ -13,7 +13,7 @@ import { USAGE_WINDOW_MS, usageChartOption, UsageSample } from '../../../shared/
 import { Echart } from '../../../shared/echart/echart';
 import { formatQuantity, RESOURCE_LABELS, resourceLines } from '../../../shared/format-quantity';
 import { PageHeader } from '../../../shared/page-header/page-header';
-import { ringClass, StatusTone } from '../../../shared/status-ring';
+import { chipClass, ringClass, StatusTone } from '../../../shared/status-ring';
 
 /** A container's live status, ready for display. */
 export interface ContainerStatusView {
@@ -196,19 +196,7 @@ export class PodsDashboard implements OnInit {
 
   protected readonly ringClass = ringClass;
 
-  /** Tailwind classes for a status chip of the given tone. */
-  protected chipClass(tone: StatusTone): string {
-    switch (tone) {
-      case 'good':
-        return 'bg-emerald-100 text-emerald-800';
-      case 'warning':
-        return 'bg-amber-100 text-amber-900';
-      case 'critical':
-        return 'bg-(--mat-sys-error-container) text-(--mat-sys-on-error-container)';
-      default:
-        return 'bg-(--mat-sys-surface-container) text-(--mat-sys-on-surface-variant)';
-    }
-  }
+  protected readonly chipClass = chipClass;
 
   ngOnInit(): void {
     this.api
