@@ -33,104 +33,152 @@
   }
 </section>
 
-@if (runInfo(); as info) {
-  @if (status(); as s) {
-    <section class="rounded-xl border border-(--mat-sys-outline-variant) p-4" aria-label="Latest run">
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div class="min-w-0">
-          <h2 class="m-0 text-lg font-medium break-words">{{ info.title || 'Workflow run' }}</h2>
-          <p class="m-0 mt-0.5 font-mono text-xs text-(--mat-sys-on-surface-variant)">run {{ info.id }}</p>
-        </div>
-        <span class="inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-medium" [class]="chipClass(s.tone)">
-          @if (s.state === 'running') {
-            <mat-progress-spinner mode="indeterminate" diameter="14" strokeWidth="2" aria-label="Running" />
-          } @else {
-            <span class="size-1.5 rounded-full bg-current"></span>
-          }
-          {{ s.label }}
-        </span>
-      </div>
-
-      <dl class="m-0 mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-4">
-        <div>
-          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Branch</dt>
-          <dd class="m-0 mt-0.5 font-mono">{{ info.branch }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
-          <dd class="m-0 mt-0.5">{{ startedText() }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ s.final ? 'Took' : 'Elapsed' }}</dt>
-          <dd class="m-0 mt-0.5 tabular-nums">{{ s.final && durationUnknown() ? '—' : elapsed() }}</dd>
-        </div>
-        <div>
-          <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">On GitHub</dt>
-          <dd class="m-0 mt-0.5"><a [href]="info.htmlUrl" target="_blank" rel="noopener" class="underline">Open the run ↗</a></dd>
-        </div>
-      </dl>
-
-      @if (lostContact()) {
-        <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--mat-sys-error-container) px-3 py-2 text-sm text-(--mat-sys-on-error-container)">
-          <span>Lost contact with the server while watching this run.</span>
-          <button mat-stroked-button type="button" (click)="retryWatching()">Try again</button>
-        </div>
-      }
-      @if (resultUnknown()) {
-        <p class="m-0 mt-4 rounded-lg bg-(--mat-sys-surface-container) px-3 py-2 text-sm text-(--mat-sys-on-surface-variant)">
-          The run has finished, but the server doesn't report whether it passed. Open it on GitHub to see the result.
-        </p>
-      }
-
-      <div class="mt-5 flex flex-col gap-4">
-        @if (stepSummary()) {
-          <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)" role="status">{{ stepSummary() }} done</p>
-        }
-        @for (job of jobs(); track job.name) {
-          <div class="rounded-lg bg-(--mat-sys-surface-container-low) p-3">
-            <div class="flex items-center justify-between gap-3">
-              <p class="m-0 text-sm font-medium">{{ job.name }}</p>
-              <span class="flex items-center gap-2">
-                @if (job.steps.length) {
-                  <span class="text-xs text-(--mat-sys-on-surface-variant) tabular-nums">{{ job.done }} of {{ job.steps.length }} steps</span>
-                }
-                <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="chipClass(job.status.tone)">{{ job.status.label }}</span>
-              </span>
+<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+  <div id="run-panel" class="min-w-0">
+    @if (selected(); as run) {
+      @if (status(); as s) {
+        <section class="rounded-xl border border-(--mat-sys-outline-variant) p-4" aria-label="Selected run">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h2 class="m-0 text-lg font-medium break-words">{{ run.title }}</h2>
+              <p class="m-0 mt-0.5 font-mono text-xs text-(--mat-sys-on-surface-variant)">run {{ run.id }}</p>
             </div>
-            @if (job.steps.length) {
-              <mat-progress-bar class="mt-2" mode="determinate" [value]="job.percent" [attr.aria-label]="job.name + ' progress'" />
-              <ol class="m-0 mt-3 flex list-none flex-col gap-0.5 p-0 text-sm">
-                @for (step of job.steps; track $index) {
-                  <li
-                    class="flex items-center gap-2 rounded px-1.5 py-0.5"
-                    [class]="step.status.state === 'running' ? 'bg-amber-100/70 font-medium' : step.status.tone === 'critical' ? 'bg-(--mat-sys-error-container)/40' : ''"
-                  >
-                    <span class="inline-flex w-4 justify-center font-bold" [class]="glyphClass(step.status.state)" aria-hidden="true">
-                      @if (step.status.state === 'running') {
-                        <mat-progress-spinner mode="indeterminate" diameter="12" strokeWidth="2" />
-                      } @else if (step.status.state === 'success') {
-                        <span class="tick">✓</span>
-                      } @else {
-                        {{ glyph(step.status.state) }}
-                      }
-                    </span>
-                    <span class="min-w-0 flex-1 break-words">{{ step.name }}</span>
-                    <span class="text-xs text-(--mat-sys-on-surface-variant)">{{ step.status.label }}</span>
-                  </li>
+            <span class="inline-flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm font-medium" [class]="chipClass(s.tone)">
+              @if (s.state === 'running') {
+                <mat-progress-spinner mode="indeterminate" diameter="14" strokeWidth="2" aria-label="Running" />
+              } @else {
+                <span class="size-1.5 rounded-full bg-current"></span>
+              }
+              {{ s.label }}
+            </span>
+          </div>
+
+          <dl class="m-0 mt-4 grid grid-cols-2 gap-x-6 gap-y-4 text-sm sm:grid-cols-5">
+            <div>
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Branch</dt>
+              <dd class="m-0 mt-0.5 font-mono break-all">{{ run.branch }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Trigger</dt>
+              <dd class="m-0 mt-0.5">{{ run.event }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
+              <dd class="m-0 mt-0.5">{{ startedText() }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">{{ s.final ? 'Took' : 'Elapsed' }}</dt>
+              <dd class="m-0 mt-0.5 tabular-nums">{{ elapsed() }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">On GitHub</dt>
+              <dd class="m-0 mt-0.5"><a [href]="run.htmlUrl" target="_blank" rel="noopener" class="underline">Open the run ↗</a></dd>
+            </div>
+          </dl>
+
+          @if (lostContact()) {
+            <div role="alert" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-(--mat-sys-error-container) px-3 py-2 text-sm text-(--mat-sys-on-error-container)">
+              <span>Lost contact with the server while watching this run.</span>
+              <button mat-stroked-button type="button" (click)="retryWatching()">Try again</button>
+            </div>
+          }
+          @if (resultUnknown()) {
+            <p class="m-0 mt-4 rounded-lg bg-(--mat-sys-surface-container) px-3 py-2 text-sm text-(--mat-sys-on-surface-variant)">
+              The run has finished, but the server doesn't report whether it passed. Open it on GitHub to see the result.
+            </p>
+          }
+
+          <div class="mt-5 flex flex-col gap-4">
+            @if (stepSummary()) {
+              <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)" role="status">{{ stepSummary() }} done</p>
+            }
+            @for (job of jobs(); track job.name) {
+              <div class="rounded-lg bg-(--mat-sys-surface-container-low) p-3">
+                <div class="flex items-center justify-between gap-3">
+                  <p class="m-0 text-sm font-medium">{{ job.name }}</p>
+                  <span class="flex items-center gap-2">
+                    @if (job.steps.length) {
+                      <span class="text-xs text-(--mat-sys-on-surface-variant) tabular-nums">{{ job.done }} of {{ job.steps.length }} steps</span>
+                    }
+                    <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="chipClass(job.status.tone)">{{ job.status.label }}</span>
+                  </span>
+                </div>
+                @if (job.steps.length) {
+                  <mat-progress-bar class="mt-2" mode="determinate" [value]="job.percent" [attr.aria-label]="job.name + ' progress'" />
+                  <ol class="m-0 mt-3 flex list-none flex-col gap-0.5 p-0 text-sm">
+                    @for (step of job.steps; track $index) {
+                      <li
+                        class="flex items-center gap-2 rounded px-1.5 py-0.5"
+                        [class]="step.status.state === 'running' ? 'bg-amber-100/70 font-medium' : step.status.tone === 'critical' ? 'bg-(--mat-sys-error-container)/40' : ''"
+                      >
+                        <span class="inline-flex w-4 justify-center font-bold" [class]="glyphClass(step.status.state)" aria-hidden="true">
+                          @if (step.status.state === 'running') {
+                            <mat-progress-spinner mode="indeterminate" diameter="12" strokeWidth="2" />
+                          } @else if (step.status.state === 'success') {
+                            <span class="tick">✓</span>
+                          } @else {
+                            {{ glyph(step.status.state) }}
+                          }
+                        </span>
+                        <span class="min-w-0 flex-1 break-words">{{ step.name }}</span>
+                        <span class="text-xs text-(--mat-sys-on-surface-variant)">{{ step.status.label }}</span>
+                      </li>
+                    }
+                  </ol>
+                } @else {
+                  <p class="m-0 mt-2 text-sm text-(--mat-sys-on-surface-variant)">Waiting for a runner to pick this job up…</p>
                 }
-              </ol>
-            } @else {
-              <p class="m-0 mt-2 text-sm text-(--mat-sys-on-surface-variant)">Waiting for a runner to pick this job up…</p>
+              </div>
+            } @empty {
+              <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)">Waiting for GitHub to report the jobs…</p>
             }
           </div>
-        } @empty {
-          <p class="m-0 text-sm text-(--mat-sys-on-surface-variant)">Waiting for GitHub to report the jobs…</p>
-        }
+        </section>
+      }
+    } @else if (runsLoaded() && !starting()) {
+      <div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
+        This repository has no workflow runs yet. Press <b>Run CI</b> to start one.
       </div>
-    </section>
-  }
-} @else if (!starting()) {
-  <div class="rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
-    No run started from here yet. Press <b>Run CI</b> to start one.
+    }
   </div>
-}
+
+  <section aria-label="Recent runs" class="min-w-0">
+    <h2 class="m-0 mb-2 text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Recent runs</h2>
+    @if (runsFailed() && rows().length === 0) {
+      <p class="m-0 rounded-lg bg-(--mat-sys-error-container) px-3 py-2 text-sm text-(--mat-sys-on-error-container)" role="alert">Couldn't load the recent runs.</p>
+    } @else {
+      <ol class="m-0 flex list-none flex-col gap-2 p-0">
+        @for (r of rows(); track r.id) {
+          <li>
+            <button
+              type="button"
+              class="w-full cursor-pointer rounded-lg border p-3 text-left transition-colors hover:bg-(--mat-sys-surface-container)"
+              [class]="r.selected ? 'border-(--mat-sys-primary) bg-(--mat-sys-surface-container-low)' : 'border-(--mat-sys-outline-variant)'"
+              [attr.aria-current]="r.selected ? 'true' : null"
+              (click)="pick(r.run)"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium" [class]="chipClass(r.status.tone)">
+                  @if (r.status.state === 'running') {
+                    <mat-progress-spinner mode="indeterminate" diameter="10" strokeWidth="2" aria-hidden="true" />
+                  }
+                  {{ r.status.label }}
+                </span>
+                <span class="text-xs text-(--mat-sys-on-surface-variant) tabular-nums">#{{ r.number }}</span>
+              </div>
+              <p class="m-0 mt-1.5 line-clamp-2 text-sm font-medium break-words">{{ r.title }}</p>
+              <p class="m-0 mt-1 text-xs text-(--mat-sys-on-surface-variant)">
+                {{ r.event }} · <span class="font-mono">{{ r.branch }}</span> · <span class="font-mono">{{ r.sha }}</span>
+              </p>
+              <p class="m-0 mt-0.5 text-xs text-(--mat-sys-on-surface-variant) tabular-nums">{{ r.ago }}{{ r.took ? ' · ' + r.took : '' }}</p>
+            </button>
+          </li>
+        } @empty {
+          @if (runsLoaded()) {
+            <li class="text-sm text-(--mat-sys-on-surface-variant)">No runs yet.</li>
+          }
+        }
+      </ol>
+    }
+  </section>
+</div>

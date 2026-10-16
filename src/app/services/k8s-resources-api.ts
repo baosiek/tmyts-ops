@@ -7,7 +7,8 @@ import { INodeUsage } from '../interfaces/i-node-usage';
 import { IDeploymentInfo } from '../interfaces/i-deployment-info';
 import { IDeploymentMetrics } from '../interfaces/i-deployment-metrics';
 import { IPodMetrics } from '../interfaces/i-pod-metrics';
-import { IActionsInfo, IActionsMetrics, IActionsRequest } from '../interfaces/i-project-actions';
+import { IActionsInfo, IActionsMetrics, IActionsRequest, IProjectRunInfo } from '../interfaces/i-project-actions';
+import { ICronJobInfo } from '../interfaces/i-cronjob-info';
 import { IEventInfo } from '../interfaces/i-event-info';
 import { IJobInfo } from '../interfaces/i-job-info';
 import { IJobLog } from '../interfaces/i-job-log';
@@ -89,6 +90,21 @@ export class K8sResourcesApi {
         return this.http.get<IEventInfo[]>(url);
     }
 
+    /** Every CronJob, with its schedule, state and next run. */
+    getCronJobs(): Observable<ICronJobInfo[]> {
+        let url: string = `${this.baseUrl}${this.endpoints['cronjobs']}`;
+        return this.http.get<ICronJobInfo[]>(url);
+    }
+
+    /**
+     * Runs a CronJob now, outside its schedule, by creating a Job from its template. The server answers
+     * with the new Job. POST with a JSON body, so a page on another origin can't trigger it.
+     */
+    executeCronJob(namespace: string, cronJob: string): Observable<IJobInfo> {
+        const url = `${this.baseUrl}${this.endpoints['executeCronJob']}/${encodeURIComponent(namespace)}/${encodeURIComponent(cronJob)}`;
+        return this.http.post<IJobInfo>(url, {});
+    }
+
     /** The repositories (folder names) that have a ci.yml workflow. */
     getProjects(): Observable<string[]> {
         let url: string = `${this.baseUrl}${this.endpoints['projects']}`;
@@ -102,6 +118,12 @@ export class K8sResourcesApi {
     executeProjectActions(owner: string, repo: string, request: IActionsRequest): Observable<IActionsInfo[]> {
         const url = `${this.baseUrl}${this.endpoints['executeProjectActions']}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
         return this.http.post<IActionsInfo[]>(url, request).pipe(timeout(100_000));
+    }
+
+    /** A repository's latest runs, newest first. */
+    getProjectRuns(owner: string, repo: string): Observable<IProjectRunInfo[]> {
+        const url = `${this.baseUrl}${this.endpoints['projectRuns']}/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+        return this.http.get<IProjectRunInfo[]>(url);
     }
 
     /** One snapshot of a run; the caller polls until the run is final. */

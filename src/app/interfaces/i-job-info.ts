@@ -5,4 +5,6 @@ export interface IJobInfo {
     cron_job: string | null;
     /** The owning CronJob's schedule, e.g. "5 0 * * *"; "NO SCHEDULE" for jobs without one. */
     scheduled: string;
+    /** The CronJob's time zone (e.g. "America/New_York"); null or missing when it sets none. */
+    time_zone?: string | null;
 }

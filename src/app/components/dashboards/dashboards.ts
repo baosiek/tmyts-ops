@@ -16,7 +16,7 @@ export class Dashboards {
     {path: "pods", label: "Pods"},
     {path: "deployments", label: "Deployments"},
     {path: "statefulsets", label: "StatefulSets"},
-    {path: "jobs", label: "Jobs"},
+    {path: "cronjobs", label: "CronJobs"},
     {path: "events", label: "Events"},  
   ]
 }

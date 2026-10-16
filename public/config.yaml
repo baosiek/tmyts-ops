@@ -26,3 +26,6 @@ endpoints:
   projects: "projects"
   executeProjectActions: "execute-project-actions"
   monitorProjectActions: "monitor-project-actions"
+  projectRuns: "project-runs"
+  executeCronJob: "execute-cronjob"
+  cronjobs: "cronjobs"

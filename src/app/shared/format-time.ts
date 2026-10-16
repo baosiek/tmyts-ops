@@ -33,3 +33,15 @@ export function formatDateTime(iso: string | null): { date: Date; text: string }
   if (Number.isNaN(date.getTime())) return null;
   return { date, text: date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) };
 }
+
+/**
+ * Milliseconds since the epoch for a timestamp, or null if it can't be read. Accepts RFC 3339
+ * ("2026-08-13T01:02:12+00:00") and the older "2026-08-13 01:02:12 UTC", which not every browser parses.
+ */
+export function parseTimestamp(value: string | null | undefined): number | null {
+  if (!value) return null;
+  const spaced = value.trim().match(/^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}(?:\.\d+)?) ?(?:UTC|Z)?$/);
+  const ms = Date.parse(spaced ? `${spaced[1]}T${spaced[2]}Z` : value);
+  return Number.isNaN(ms) ? null : ms;
+}
+

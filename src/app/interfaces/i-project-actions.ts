@@ -48,3 +48,27 @@ export interface IActionsMetrics {
     conclusion?: string | null;
     jobs: IGhJob[];
 }
+
+/** One run of a repository's workflows, from project-runs (the latest 20, newest first). */
+export interface IProjectRunInfo {
+    owner: string;
+    repo: string;
+    /** What started it: "push", "workflow_dispatch", "pull_request", "schedule"… */
+    event: string;
+    head_branch: string;
+    /** GitHub's run status: "queued", "in_progress" or "completed". */
+    status: string;
+    /** The result once finished: "success", "failure", "cancelled"…; empty until then. */
+    conclusion: string;
+    /** When the run was created and last changed (RFC 3339). */
+    created_at: string;
+    updated_at: string;
+    /** The run id; pass it to monitor-project-actions. */
+    id: number;
+    run_html: string;
+    /** The commit message of the commit that was built (may span several lines). */
+    commit_message: string;
+    head_sha: string;
+    run_number: number;
+}
+

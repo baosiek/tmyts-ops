@@ -43,16 +43,19 @@ export const routes: Routes = [
                     loadComponent: () =>
                         import('./components/dashboards/workload-logs/workload-logs').then((m) => m.WorkloadLogs),
                 },
+                { path: 'jobs', pathMatch: 'full', redirectTo: 'cronjobs' },
                 {
-                    path: 'jobs',
+                    path: 'cronjobs',
                     loadComponent: () =>
-                        import('./components/dashboards/jobs-dashboard/jobs-dashboard').then((m) => m.JobsDashboard),
+                        import('./components/dashboards/cronjobs-dashboard/cronjobs-dashboard').then((m) => m.CronJobsDashboard),
                 },
                 {
-                    path: 'jobs/:namespace/:job/logs',
+                    path: 'cronjobs/:namespace/:job/logs',
                     loadComponent: () =>
                         import('./components/dashboards/job-logs/job-logs').then((m) => m.JobLogs),
                 },
+                // The logs page used to live under /jobs; keep old links working.
+                { path: 'jobs/:namespace/:job/logs', redirectTo: 'cronjobs/:namespace/:job/logs' },
                 {
                     path: 'events',
                     loadComponent: () =>

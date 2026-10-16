@@ -48,14 +48,23 @@ function describeDays(dow: number[]): string {
     : days.map(short).join(', ');
 }
 
+/** " UTC" or " America/New_York"; nothing when the zone isn't known, so no zone is claimed. */
+function zoneLabel(timeZone: string | null | undefined): string {
+  const zone = (timeZone ?? '').trim();
+  if (!zone) return '';
+  return zone === 'Etc/UTC' || zone === 'UTC' ? ' UTC' : ` ${zone}`;
+}
+
 /**
- * A plain-English reading of a cron schedule ("Weekdays at 08:50 UTC"), or null
- * when the expression uses something this doesn't cover (then show it as is).
- * Times are UTC, which is what the cluster's controller uses.
+ * A plain-English reading of a cron schedule ("Weekdays at 08:50 America/New_York"), or null
+ * when the expression uses something this doesn't cover (then show it as is). `timeZone` is the
+ * CronJob's spec.timeZone; without it the times are given with no zone, because the cluster's own
+ * zone isn't known here.
  */
-export function describeCron(expr: string): string | null {
+export function describeCron(expr: string, timeZone?: string | null): string | null {
+  const zone = zoneLabel(timeZone);
   const trimmed = expr.trim();
-  if (ALIASES[trimmed]) return trimmed === '@hourly' ? ALIASES[trimmed] : `${ALIASES[trimmed]} UTC`;
+  if (ALIASES[trimmed]) return trimmed === '@hourly' ? ALIASES[trimmed] : `${ALIASES[trimmed]}${zone}`;
 
   const fields = trimmed.split(/\s+/);
   if (fields.length !== 5) return null;
@@ -73,7 +82,7 @@ export function describeCron(expr: string): string | null {
   const hours = parseList(hour, 23);
   if (!hours) return null;
   const times = hours.map((h) => `${pad(h)}:${pad(m)}`);
-  const at = `at ${times.length > 1 ? `${times.slice(0, -1).join(', ')} and ${times.at(-1)}` : times[0]} UTC`;
+  const at = `at ${times.length > 1 ? `${times.slice(0, -1).join(', ')} and ${times.at(-1)}` : times[0]}${zone}`;
 
   if (dom === '*' && dow === '*') return `Every day ${at}`;
   if (dom === '*') {

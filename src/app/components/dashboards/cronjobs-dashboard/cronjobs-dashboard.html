@@ -1,0 +1,147 @@
+<app-page-header title="CronJobs" [loading]="loading()" subtitle="Scheduled jobs, their runs and what's due next." />
+<app-namespace-filter [state]="nsFilter" />
+
+<section
+  class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-(--mat-sys-outline-variant) bg-(--mat-sys-surface-container-low) p-4"
+  aria-label="CronJob summary and filters"
+>
+  <div class="min-w-0">
+    <p class="m-0 text-base font-medium">
+      {{ summary().total }} {{ summary().total === 1 ? 'CronJob' : 'CronJobs' }}
+      @if (summary().failing > 0) {
+        · <span class="font-bold text-(--mat-sys-error)">{{ summary().failing }} failing</span>
+      }
+      @if (summary().running > 0) {
+        · {{ summary().running }} running
+      }
+      @if (summary().paused > 0) {
+        · {{ summary().paused }} paused
+      }
+    </p>
+    @if (summary().next; as next) {
+      <p class="m-0 mt-0.5 text-sm text-(--mat-sys-on-surface-variant)">Next up: <span class="font-medium">{{ next.name }}</span>, {{ next.relative }}</p>
+    }
+  </div>
+  @if (tagCounts().length) {
+    <mat-chip-listbox class="ml-auto" aria-label="Filter by status" multiple [value]="tags()" (change)="onTags($event.value)">
+      @for (t of tagCounts(); track t.tag) {
+        <mat-chip-option [value]="t.tag">{{ t.tag }} {{ t.count }}</mat-chip-option>
+      }
+    </mat-chip-listbox>
+  }
+  @if (filtered()) {
+    <button mat-button type="button" (click)="clearFilters()">Clear filters</button>
+  }
+</section>
+
+<div class="grid grid-cols-[repeat(auto-fill,minmax(22rem,1fr))] gap-4">
+  @for (c of cards(); track c.key) {
+    <mat-card>
+      <div class="flex items-start justify-between gap-3 px-4 pt-4">
+        <div class="min-w-0">
+          <h3 class="m-0 text-lg font-medium break-all">{{ c.cj.name }}</h3>
+          <p class="m-0 mt-0.5 flex flex-wrap items-center gap-2 font-mono text-sm text-(--mat-sys-on-surface-variant)">
+            {{ c.cj.namespace }}
+            @if (c.cj.suspend) {
+              <span class="rounded-full bg-amber-100 px-2 py-0.5 font-sans text-xs font-medium text-amber-900">Paused</span>
+            }
+          </p>
+        </div>
+        <span
+          class="flex size-18 shrink-0 items-center justify-center rounded-full border-[5px] px-1 text-center text-xs leading-tight font-medium"
+          [class]="ringClass(c.ringTone)"
+        >
+          {{ c.ringStatus }}
+        </span>
+      </div>
+
+      <mat-card-content>
+        <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-4 pt-5 text-sm">
+          <div class="col-span-2 min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Schedule</dt>
+            @if (c.schedule) {
+              <dd class="m-0 mt-0.5">{{ c.schedule }}</dd>
+              <dd class="m-0 font-mono text-xs text-(--mat-sys-on-surface-variant)">{{ c.cj.schedule }}</dd>
+            } @else {
+              <dd class="m-0 mt-0.5 font-mono">{{ c.cj.schedule }}</dd>
+            }
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Next run</dt>
+            @if (c.cj.suspend) {
+              <dd class="m-0 mt-0.5">Paused</dd>
+            } @else if (c.next; as next) {
+              <dd class="m-0 mt-0.5">{{ next.text }}</dd>
+              <dd class="m-0 text-xs text-(--mat-sys-on-surface-variant)">{{ next.relative }}</dd>
+            } @else {
+              <dd class="m-0 mt-0.5">—</dd>
+            }
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Last success</dt>
+            <dd class="m-0 mt-0.5" [class.text-(--mat-sys-error)]="c.failing">{{ c.lastSuccess ?? 'Never' }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>
+            <dd class="m-0 mt-0.5">{{ c.latest?.run?.started ?? '—' }}</dd>
+            @if (c.latest?.run?.startedAgo) {
+              <dd class="m-0 text-xs text-(--mat-sys-on-surface-variant)">{{ c.latest!.run!.startedAgo }}</dd>
+            }
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Finished</dt>
+            <dd class="m-0 mt-0.5">{{ c.latest?.run?.finished ?? '—' }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Duration</dt>
+            <dd class="m-0 mt-0.5 tabular-nums">{{ c.latest?.run?.duration ?? '—' }}</dd>
+          </div>
+          <div class="min-w-0">
+            <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Pods</dt>
+            <dd class="m-0 mt-0.5 tabular-nums">{{ c.latest?.run?.pods?.length ? c.latest!.run!.pods.join(' · ') : '—' }}</dd>
+          </div>
+        </dl>
+      </mat-card-content>
+      <mat-card-actions class="px-2 pb-2">
+        @if (c.runs.length > 1) {
+          <!-- Kubernetes keeps a few finished jobs per CronJob; pick which run's logs to read. -->
+          <button mat-button type="button" [matMenuTriggerFor]="runsMenu" aria-label="View logs, choose a run">View logs ▾</button>
+          <mat-menu #runsMenu="matMenu">
+            @for (r of c.runs; track r.key) {
+              <a mat-menu-item [routerLink]="['/dashboards/cronjobs', r.namespace, r.name, 'logs']">
+                {{ r.run?.status ?? 'Unknown' }} · {{ r.run?.startedAgo || r.name }}
+              </a>
+            }
+          </mat-menu>
+        } @else if (c.latest; as latest) {
+          <a mat-button [routerLink]="['/dashboards/cronjobs', latest.namespace, latest.name, 'logs']">View logs</a>
+        }
+        @if (actionsOn) {
+          <button mat-button type="button" [disabled]="c.starting" (click)="runNow(c)">{{ c.starting ? 'Starting…' : 'Run now' }}</button>
+        }
+      </mat-card-actions>
+    </mat-card>
+  } @empty {
+    @if (!loading()) {
+      <div class="col-span-full rounded-xl border border-dashed border-(--mat-sys-outline-variant) p-10 text-center text-sm text-(--mat-sys-on-surface-variant)">
+        {{ filtered() ? 'No CronJobs match the selected status.' : 'No CronJobs in the selected namespaces.' }}
+      </div>
+    }
+  }
+</div>
+
+@if (otherJobs().length) {
+  <section class="mt-6" aria-label="Jobs without a CronJob">
+    <h2 class="m-0 mb-2 text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Other jobs · {{ otherJobs().length }}</h2>
+    <ul class="m-0 grid list-none gap-2 p-0">
+      @for (r of otherJobs(); track r.key) {
+        <li class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-(--mat-sys-outline-variant) px-3 py-2 text-sm">
+          <span class="min-w-0 flex-1 break-all">{{ r.name }} <span class="font-mono text-xs text-(--mat-sys-on-surface-variant)">{{ r.namespace }}</span></span>
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium" [class]="chipClass(r.run?.tone ?? 'neutral')">{{ r.run?.status ?? 'Unknown' }}</span>
+          <span class="text-xs text-(--mat-sys-on-surface-variant)">{{ r.run?.startedAgo }}</span>
+          <a class="text-xs underline" [routerLink]="['/dashboards/cronjobs', r.namespace, r.name, 'logs']">Logs</a>
+        </li>
+      }
+    </ul>
+  </section>
+}
