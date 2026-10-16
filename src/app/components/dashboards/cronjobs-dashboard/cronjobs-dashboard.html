@@ -79,7 +79,12 @@
           </div>
           <div class="min-w-0">
             <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Last success</dt>
-            <dd class="m-0 mt-0.5" [class.text-(--mat-sys-error)]="c.failing">{{ c.lastSuccess ?? 'Never' }}</dd>
+            <dd
+              class="m-0 mt-0.5"
+              [class.text-(--mat-sys-error)]="c.failing"
+              [class.text-emerald-700]="c.ok"
+              [title]="c.failing ? 'The latest run failed; this is the last time it succeeded.' : c.ok ? 'The latest run succeeded.' : ''"
+            >{{ c.lastSuccess ?? 'Never' }}</dd>
           </div>
           <div class="min-w-0">
             <dt class="text-xs font-bold tracking-wide text-(--mat-sys-on-surface-variant) uppercase">Started</dt>

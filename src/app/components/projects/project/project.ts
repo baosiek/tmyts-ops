@@ -152,6 +152,11 @@ export class Project implements OnInit {
     return formatDuration((end - start) / 1000);
   });
 
+  /** True while the page is waiting for data: the list of runs, or the first look at the selected run's steps. */
+  protected readonly loadingData = computed(
+    () => !this.runsLoaded() || (this.selected() !== null && this.metrics() === null && !this.lostContact()),
+  );
+
   /** Final but without a reported result: the page can't say whether it passed. */
   protected readonly resultUnknown = computed(() => {
     const status = this.status();

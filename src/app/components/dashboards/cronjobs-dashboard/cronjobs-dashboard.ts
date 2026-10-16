@@ -174,6 +174,8 @@ export class CronJobsDashboard implements OnInit {
           nextAt: next,
           running,
           failing,
+          /** The latest run succeeded and nothing is running now. */
+          ok: !failing && !running && newest?.run?.status === 'Complete',
           runs,
           latest: newest,
           ringStatus,

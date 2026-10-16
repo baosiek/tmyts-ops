@@ -1,4 +1,4 @@
-<app-page-header [title]="repo()" [subtitle]="owner + '/' + repo() + ' · ' + workflow" />
+<app-page-header [title]="repo()" [loading]="loadingData()" [subtitle]="owner + '/' + repo() + ' · ' + workflow" />
 
 <section
   class="mb-4 flex flex-col gap-3 rounded-xl border border-(--mat-sys-outline-variant) bg-(--mat-sys-surface-container-low) p-4"
